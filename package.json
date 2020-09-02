@@ -1,0 +1,14 @@
+{
+  "name": "pcan",
+  "version": "0.0.0",
+  "description": "CS PCAN module for Node",
+  "main": "pcan.js",
+  "private": true,
+  "dependencies": {
+    "bindings": "~1.2.1"
+  },
+  "scripts": {
+    "test": "node pcan.js"
+  },
+  "gypfile": true
+}
