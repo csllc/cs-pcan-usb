@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include "PCANBasic.h"
+
 #include "helper.h"
 
 napi_value CAN_initialize(napi_env env, napi_callback_info info)
@@ -40,13 +42,24 @@ napi_value Init(napi_env env, napi_value exports)
 {
     napi_status status;
 
-    printf("pcan.cc: Init\n");
+    printf("Init (pcan.c)\n");
 
+    /* Export methods */
     napi_property_descriptor desc_CAN_initialize =
 	DECLARE_NAPI_METHOD("CAN_initialize", CAN_initialize);
 
     status = napi_define_properties(env, exports, 1, &desc_CAN_initialize);
     assert(status == napi_ok);
+
+
+
+    /* Get current CAN status */
+    TPCANStatus can_status = 0;
+    
+    can_status = CAN_GetStatus(PCAN_CAN_CHANNEL);
+    printf("Init: CAN_GetStatus: %x\n", can_status);
+
+
 
     return exports;
 }

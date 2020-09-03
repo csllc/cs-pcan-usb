@@ -7,10 +7,7 @@
 
 /* Iterate through a given napi_value's properties, and print the complete
    contents to stdout */
-void napi_value_dump(
-    napi_env env,
-    napi_value value,
-    char* name = 0)
+void napi_value_dump(napi_env env, napi_value value, char* name)
 {
     napi_status status;
 
