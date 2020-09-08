@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "helper.h"
+#include "PCANBasic.h"
 
 /* Iterate through a given napi_value's properties, and print the complete
    contents to stdout */
@@ -113,6 +114,7 @@ void napi_value_dump(napi_env env, napi_value value, char* name)
     return;
 }
 
+
 struct {
     int code;
     char* string;
@@ -173,6 +175,7 @@ struct {
     { 0, 0}
 };
 
+
 char *napi_valuetype_lookup(napi_valuetype valuetype)
 {
     int i;
@@ -184,4 +187,166 @@ char *napi_valuetype_lookup(napi_valuetype valuetype)
     }
 
     return "unknown";
+}
+
+
+bool napi_check(napi_env env, napi_status status)
+{
+    napi_extended_error_info *error_info = NULL;
+    bool exception_pending = false;
+
+    if (status != napi_ok) {
+	napi_get_last_error_info(env, &error_info);
+	napi_is_exception_pending(env, &exception_pending);
+
+	if (!exception_pending) {
+	    napi_dump_error_info(error_info);
+	    napi_throw_error(env, NULL,
+			     error_info->error_message);
+	}
+
+	return false;
+    }
+
+    return true;
+}
+
+
+void napi_dump_error_info(napi_extended_error_info *error_info)
+{
+    printf("error_info {\n"
+	   "  error_message = \"%s\"\n"
+	   "  engine_reserved = %p\n"
+	   "  engine_error_code = 0x%X\n"
+	   "  error_code = 0x%X\n"
+	   "  }\n",
+	   error_info->error_message,
+	   error_info->engine_reserved,
+	   error_info->engine_error_code,
+	   error_info->error_code);
+
+    return;
+}
+
+
+struct {
+    int status;
+    char* string;
+} statuses[] = {
+    { PCAN_ERROR_OK, "PCAN_ERROR_OK" },
+    { PCAN_ERROR_XMTFULL, "PCAN_ERROR_XMTFULL" },
+    { PCAN_ERROR_OVERRUN, "PCAN_ERROR_OVERRUN" },
+    { PCAN_ERROR_BUSLIGHT, "PCAN_ERROR_BUSLIGHT" },
+    { PCAN_ERROR_BUSHEAVY, "PCAN_ERROR_BUSHEAVY" },
+    { PCAN_ERROR_BUSWARNING, "PCAN_ERROR_BUSWARNING" },
+    { PCAN_ERROR_BUSPASSIVE, "PCAN_ERROR_BUSPASSIVE" },
+    { PCAN_ERROR_BUSOFF, "PCAN_ERROR_BUSOFF" },
+    { PCAN_ERROR_ANYBUSERR, "PCAN_ERROR_ANYBUSERR" },
+    { PCAN_ERROR_QRCVEMPTY, "PCAN_ERROR_QRCVEMPTY" },
+    { PCAN_ERROR_QOVERRUN, "PCAN_ERROR_QOVERRUN" },
+    { PCAN_ERROR_QXMTFULL, "PCAN_ERROR_QXMTFULL" },
+    { PCAN_ERROR_REGTEST, "PCAN_ERROR_REGTEST" },
+    { PCAN_ERROR_NODRIVER, "PCAN_ERROR_NODRIVER" },
+    { PCAN_ERROR_HWINUSE, "PCAN_ERROR_HWINUSE" },
+    { PCAN_ERROR_NETINUSE, "PCAN_ERROR_NETINUSE" },
+    { PCAN_ERROR_ILLHW, "PCAN_ERROR_ILLHW" },
+    { PCAN_ERROR_ILLNET, "PCAN_ERROR_ILLNET" },
+    { PCAN_ERROR_ILLCLIENT, "PCAN_ERROR_ILLCLIENT" },
+    { PCAN_ERROR_ILLHANDLE, "PCAN_ERROR_ILLHANDLE" },
+    { PCAN_ERROR_RESOURCE, "PCAN_ERROR_RESOURCE" },
+    { PCAN_ERROR_ILLPARAMTYPE, "PCAN_ERROR_ILLPARAMTYPE" },
+    { PCAN_ERROR_ILLPARAMVAL, "PCAN_ERROR_ILLPARAMVAL" },
+    { PCAN_ERROR_UNKNOWN, "PCAN_ERROR_UNKNOWN" },
+    { PCAN_ERROR_ILLDATA, "PCAN_ERROR_ILLDATA" },
+    { PCAN_ERROR_ILLMODE, "PCAN_ERROR_ILLMODE" },
+    { PCAN_ERROR_CAUTION, "PCAN_ERROR_CAUTION" },
+    { PCAN_ERROR_INITIALIZE, "PCAN_ERROR_INITIALIZE" },
+    { PCAN_ERROR_ILLOPERATION, "PCAN_ERROR_ILLOPERATION" },
+};
+
+
+char *pcan_status_lookup(TPCANStatus status)
+{
+    int i;
+
+    for (i = 0; statuses[i].string; i++) {
+	if (statuses[i].status == status) {
+	    return statuses[i].string;
+	}
+    }
+
+    return "status unknown";
+}
+
+
+void pcan_dump_msg(TPCANMsg *msg)
+{
+    int i;
+
+    printf("msg { \n"
+	     "  ID = 0x%X\n"
+	     "  MSGTYPE = 0x%X (%s)\n"
+	     "  LEN = 0x%X\n"
+	     "  DATA = {",
+	   msg->ID,
+	   msg->MSGTYPE,
+	   pcan_msgtype_lookup(msg->MSGTYPE),
+	   msg->LEN);
+
+    for (i=0; i < (msg->LEN); i++) {
+	printf("0x%X", msg->DATA[i]);
+	if (i != ((msg->LEN) - 1)) {
+	    printf(", ");
+	}
+    }
+
+    printf("}\n"
+	   "}\n");
+
+    return;
+}
+
+
+
+struct {
+    int type;
+    char* string;
+} types [] = {
+    { PCAN_MESSAGE_STANDARD, "PCAN_MESSAGE_STANDARD" },
+    { PCAN_MESSAGE_RTR, "PCAN_MESSAGE_RTR" },
+    { PCAN_MESSAGE_EXTENDED, "PCAN_MESSAGE_EXTENDED" },
+    { PCAN_MESSAGE_FD, "PCAN_MESSAGE_FD" },
+    { PCAN_MESSAGE_BRS, "PCAN_MESSAGE_BRS" },
+    { PCAN_MESSAGE_ESI, "PCAN_MESSAGE_ESI" },
+    { PCAN_MESSAGE_ERRFRAME, "PCAN_MESSAGE_ERRFRAME" },
+    { PCAN_MESSAGE_STATUS, "PCAN_MESSAGE_STATUS" },
+    { 0, 0 }
+};
+
+char *pcan_msgtype_lookup(TPCANMessageType type)
+{
+    int i;
+
+    for (i = 0; types[i].string; i++) {
+	if (types[i].type == type) {
+	    return types[i].string;
+	}
+    }
+
+    return "msgtype unknown";
+}
+
+
+void pcan_dump_timestamp(TPCANTimestamp *timestamp)
+{
+    printf("timestamp {\n"
+	   "  millis = %i\n"
+	   "  millis_overflow = %i\n"
+	   "  micros = %i\n"
+	   "}\n",
+	   timestamp->millis,
+	   timestamp->millis_overflow,
+	   timestamp->micros);
+
+    return;
 }
