@@ -16,9 +16,6 @@ function TPCANTimestamp(millis = 0,
   this.micros = 0;
 }
 
-
-
-
 var pcan = require('bindings')('pcan.node')
 
 pcan.CAN_GetStatus(0x51);
@@ -27,18 +24,23 @@ pcan.CAN_GetStatus(0x51);
 
 var msg = new TPCANMsg();
 var timestamp = new TPCANTimestamp();
-console.log(msg);
-console.log(timestamp);
-
-//pcan.CAN_Read(0x51, data_buffer, timestamp_buffer);
 pcan.CAN_Read(0x51, msg, timestamp);
-//pcan.CAN_Read(0x51, msg, timestamp);
 
 console.log(msg);
 console.log(timestamp);
 
-//console.log(data_buffer);
-//console.log(timestamp_buffer);
+for (var byte in msg.data) {
+  msg.data[byte] += 1;
+}
+
+/* Repeat message */
+pcan.CAN_Write(0x51, msg);
+
+/* Get parameter */
+let value = {};
+pcan.CAN_GetValue(0x51, 0x0E, value);
+
+console.log(value);
 
 pcan.CAN_Reset(0x51);
 pcan.CAN_GetStatus(0x51);

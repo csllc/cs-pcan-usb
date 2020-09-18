@@ -362,12 +362,103 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
 
     /* Create a N-API value for the result and return it */
     napi_value result;
+    status = napi_create_int32(env, pcan_result, &result);
     
     return result;
 }
 
 
 
+
+napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32) */
+    size_t argc = 3; /* TODO: make these constants somewhere, instead of magic numbers */
+    napi_value argv[3];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 3) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
+			      "The N-API implementation of CAN_GetValue only accepts Channel, Parameter, and Value.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - channel */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - parameter */
+    int32_t pcan_Parameter;
+    status = napi_get_value_int32(env, argv[1], &pcan_Parameter);
+    assert(status == napi_ok);
+
+    /* argv[2] - buffer */
+    napi_valuetype pcan_Buffer_type;
+    status = napi_typeof(env, argv[2], &pcan_Buffer_type);
+    assert(status == napi_ok);
+
+    if (pcan_Buffer_type != napi_object) {
+	napi_throw_type_error(env, 0, "Argument 2 is not an object.");
+	return 0;
+    }
+
+    /* argv[3] - buffer length (skipped) */
+    uint32_t pcan_BufferLength;
+    
+
+    /* Some parameters return things other than a single uint32. These are currently
+       outside of the scope of this project. */
+    switch (pcan_Parameter) {
+    case PCAN_LOG_LOCATION:
+    case PCAN_LOG_TEXT:
+    case PCAN_TRACE_LOCATION:
+    case PCAN_IP_ADDRESS:
+    case PCAN_ATTACHED_CHANNELS:
+    case PCAN_HARDWARE_NAME:
+	napi_throw_error(env, 0, "Requested parameter is currently unsupported.");
+	return 0;
+    default:
+	break;
+    }
+
+    /* Create empty buffers */
+    uint32_t pcan_Buffer = 0;
+    pcan_BufferLength = sizeof(pcan_Buffer);
+      
+    /* Get requested value from CAN channel */
+    TPCANStatus pcan_result;
+
+    pcan_result = CAN_GetValue(pcan_Channel, pcan_Parameter, &pcan_Buffer, pcan_BufferLength);
+
+    printf("pcan_CAN_GetValue: 0x%02X, 0x%02X (%s), 0x%02X, 0x%02X, 0x%02X (%s)\n",
+	   pcan_Channel, pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
+	   pcan_Buffer, pcan_BufferLength, pcan_result, pcan_status_lookup(pcan_result));
+    /* TODO: replace instances of "pcan_result" with "pcan_status" */
+
+    /* Put value into an the buffer object passed from N-API */
+    napi_value pcan_Buffer_value;
+    status = napi_create_uint32(env, pcan_Buffer, &pcan_Buffer_value);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[2], "value", pcan_Buffer_value);
+    assert(status == napi_ok);
+
+    /* Create a N-API value for the result and return it */
+    napi_value result;
+    status = napi_create_int32(env, pcan_result, &result);
+
+    return result;
+}
+
+
+
+enum { descriptors_len = 7 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -377,16 +468,17 @@ napi_value Init(napi_env env, napi_value exports)
     setvbuf(stdout, NULL, _IONBF, 0);
 
     /* Build array of property descriptors */
-    napi_property_descriptor descriptors[6] = {
+    napi_property_descriptor descriptors[descriptors_len] = {
 	DECLARE_NAPI_METHOD("CAN_Initialize", pcan_CAN_Initialize),
 	DECLARE_NAPI_METHOD("CAN_Uninitialize", pcan_CAN_Uninitialize),
 	DECLARE_NAPI_METHOD("CAN_Reset", pcan_CAN_Reset),
 	DECLARE_NAPI_METHOD("CAN_GetStatus", pcan_CAN_GetStatus),
 	DECLARE_NAPI_METHOD("CAN_Read", pcan_CAN_Read),
 	DECLARE_NAPI_METHOD("CAN_Write", pcan_CAN_Write),
+	DECLARE_NAPI_METHOD("CAN_GetValue", pcan_CAN_GetValue),
     };
 
-    status = napi_define_properties(env, exports, 6, descriptors);
+    status = napi_define_properties(env, exports, descriptors_len, descriptors);
     assert(status == napi_ok);
 
     return exports;
