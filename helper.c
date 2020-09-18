@@ -217,8 +217,8 @@ void napi_dump_error_info(napi_extended_error_info *error_info)
     printf("error_info {\n"
 	   "  error_message = \"%s\"\n"
 	   "  engine_reserved = %p\n"
-	   "  engine_error_code = 0x%X\n"
-	   "  error_code = 0x%X\n"
+	   "  engine_error_code = 0x%02X\n"
+	   "  error_code = 0x%02X\n"
 	   "  }\n",
 	   error_info->error_message,
 	   error_info->engine_reserved,
@@ -284,9 +284,9 @@ void pcan_dump_msg(TPCANMsg *msg)
     int i;
 
     printf("msg { \n"
-	     "  ID = 0x%X\n"
-	     "  MSGTYPE = 0x%X (%s)\n"
-	     "  LEN = 0x%X\n"
+	     "  ID = 0x%02X\n"
+	     "  MSGTYPE = 0x%02X (%s)\n"
+	     "  LEN = 0x%02X\n"
 	     "  DATA = {",
 	   msg->ID,
 	   msg->MSGTYPE,
@@ -294,7 +294,7 @@ void pcan_dump_msg(TPCANMsg *msg)
 	   msg->LEN);
 
     for (i=0; i < (msg->LEN); i++) {
-	printf("0x%X", msg->DATA[i]);
+	printf("0x%02X", msg->DATA[i]);
 	if (i != ((msg->LEN) - 1)) {
 	    printf(", ");
 	}
