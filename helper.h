@@ -21,5 +21,6 @@ char *pcan_status_lookup(TPCANStatus status);
 void pcan_dump_msg(TPCANMsg *msg);
 char *pcan_msgtype_lookup(TPCANMessageType type);
 void pcan_dump_timestamp(TPCANTimestamp *timestamp);
+char *pcan_parameter_lookup(TPCANParameter parameter);
 
 #endif /* _HELPER_H_ */
