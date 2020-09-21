@@ -523,7 +523,7 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
 
     printf("\n");
 
-    /* Create a N-API value for the result and return it */
+    /* Create an N-API value for the result and return it */
     napi_value result;
     
     status = napi_create_int32(env, pcan_result, &result);
@@ -533,7 +533,42 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
 
 
 
-enum { descriptors_len = 8 };
+
+napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    printf("pcan_CAN_FilterMessages: Not yet implemented.\n");
+    
+    /* Create an N-API value for the result and return it */
+    napi_value result;
+
+    status = napi_create_int32(env, pcan_result, &result);
+
+    return result;
+}
+
+
+
+
+napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    printf("pcan_CAN_GetErrorText: Not yet implemented.\n");
+    
+    /* Create an N-API value for the result and return it */
+    napi_value result;
+
+    status = napi_create_int32(env, pcan_result, &result);
+
+    return result;
+}
+
+
+
+
+enum { descriptors_len = 10 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -552,6 +587,8 @@ napi_value Init(napi_env env, napi_value exports)
 	DECLARE_NAPI_METHOD("CAN_Write", pcan_CAN_Write),
 	DECLARE_NAPI_METHOD("CAN_GetValue", pcan_CAN_GetValue),
 	DECLARE_NAPI_METHOD("CAN_SetValue", pcan_CAN_SetValue),
+	DECLARE_NAPI_METHOD("CAN_FilterMessages", pcan_CAN_FilterMessages),
+	DECLARE_NAPI_METHOD("CAN_GetErrorText", pcan_CAN_GetErrorText),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);
