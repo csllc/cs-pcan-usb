@@ -36,11 +36,15 @@ for (var byte in msg.data) {
 /* Repeat message */
 pcan.CAN_Write(0x51, msg);
 
-/* Get parameter */
-let value = {};
-pcan.CAN_GetValue(0x51, 0x0E, value);
+/* Set parameter */
+var buffer = Buffer.from([0x56]);
+console.log(buffer);
+pcan.CAN_SetValue(0x51, 0x01, buffer);
 
-console.log(value);
+/* Get parameter */
+buffer = Buffer.alloc(0x17);
+pcan.CAN_GetValue(0x51, 0x0E, buffer);
+console.log(buffer);
 
 pcan.CAN_Reset(0x51);
 pcan.CAN_GetStatus(0x51);

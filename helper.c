@@ -307,6 +307,25 @@ void pcan_dump_msg(TPCANMsg *msg)
 }
 
 
+void pcan_dump_buffer(BYTE *buffer, size_t buffer_len)
+{
+    int i;
+
+    printf("{");
+
+    for (i = 0; i < buffer_len; i++) {
+	printf("0x%02X", buffer[i]);
+	if (i != (buffer_len - 1)) {
+	    printf(", ");
+	}
+    }
+
+    printf("}");
+
+    return;
+}
+
+
 
 struct {
     int type;

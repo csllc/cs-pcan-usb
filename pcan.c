@@ -7,7 +7,7 @@
 
 #include "helper.h"
 
-
+/* TODO: replace instances of "pcan_result" with "pcan_status" */
 
 napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 {
@@ -372,7 +372,7 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
 
 napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 {
-    napi_status status;
+    napi_status status = napi_generic_failure; /* TODO: initialize all statuses like this */
 
     /* Get callback info and arguments:
        TPCANHandle Channel (int32) */
@@ -384,7 +384,93 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 
     if (argc != 3) {
 	napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
-			      "The N-API implementation of CAN_GetValue only accepts Channel, Parameter, and Value.");
+			      "The N-API implementation of CAN_GetValue accepts Channel, Parameter, and Buffer.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - channel */
+    int32_t pcan_Channel;
+    
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - parameter */
+    int32_t pcan_Parameter;
+    
+    status = napi_get_value_int32(env, argv[1], &pcan_Parameter);
+    assert(status == napi_ok);
+
+    /* argv[2] - buffer */
+    napi_valuetype pcan_Buffer_type;
+    
+    status = napi_typeof(env, argv[2], &pcan_Buffer_type);
+    assert(status == napi_ok);
+
+    if (pcan_Buffer_type != napi_object) {
+	napi_throw_type_error(env, 0, "Argument 2 is not an object.");
+	return 0;
+    }
+
+    /* argv[3] - buffer length (obtained from pcan_Buffer) */
+    BYTE *pcan_Buffer = 0;
+    size_t pcan_BufferLength = 0;
+    
+    status = napi_get_buffer_info(env, argv[2], (void**)&pcan_Buffer, &pcan_BufferLength);
+    assert(status == napi_ok);
+
+    /* Get requested value from CAN channel */
+    TPCANStatus pcan_result = 0;
+
+    pcan_result = CAN_GetValue(pcan_Channel, pcan_Parameter, pcan_Buffer, pcan_BufferLength);
+
+    /* Dump data to console */
+    printf("pcan_CAN_GetValue: \n"
+	   "  pcan_result = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_Parameter = 0x%02X (%s)\n"
+	   "  pcan_BufferLength = 0x%02zX\n"
+	   "  pcan_Buffer = ",
+	   pcan_result, pcan_status_lookup(pcan_result),
+	   pcan_Channel,
+	   pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
+	   pcan_BufferLength);
+
+    pcan_dump_buffer(pcan_Buffer, pcan_BufferLength);
+
+    printf("\n");
+
+    /* Put value into an the buffer object passed from N-API */
+    napi_value pcan_Buffer_value;
+    
+    status = napi_create_buffer(env, pcan_BufferLength, &pcan_Buffer, &pcan_Buffer_value);
+    assert(status == napi_ok);
+
+    /* Create a N-API value for the result and return it */
+    napi_value result;
+    
+    status = napi_create_int32(env, pcan_result, &result);
+
+    return result;
+}
+
+
+
+napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32) */
+    size_t argc = 3; /* TODO: make these constants somewhere, instead of magic numbers */
+    napi_value argv[3];
+
+        status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 3) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
+			      "The N-API implementation of CAN_SetValue accepts Channel, Parameter, and Buffer.");
 	return 0;
     }
 
@@ -409,48 +495,37 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 	return 0;
     }
 
-    /* argv[3] - buffer length (skipped) */
-    uint32_t pcan_BufferLength;
+    /* buffer length (obtained from pcan_Buffer) */
+    BYTE *pcan_Buffer = 0;
+    size_t pcan_BufferLength = 0;
     
-
-    /* Some parameters return things other than a single uint32. These are currently
-       outside of the scope of this project. */
-    switch (pcan_Parameter) {
-    case PCAN_LOG_LOCATION:
-    case PCAN_LOG_TEXT:
-    case PCAN_TRACE_LOCATION:
-    case PCAN_IP_ADDRESS:
-    case PCAN_ATTACHED_CHANNELS:
-    case PCAN_HARDWARE_NAME:
-	napi_throw_error(env, 0, "Requested parameter is currently unsupported.");
-	return 0;
-    default:
-	break;
-    }
-
-    /* Create empty buffers */
-    uint32_t pcan_Buffer = 0;
-    pcan_BufferLength = sizeof(pcan_Buffer);
-      
-    /* Get requested value from CAN channel */
-    TPCANStatus pcan_result;
-
-    pcan_result = CAN_GetValue(pcan_Channel, pcan_Parameter, &pcan_Buffer, pcan_BufferLength);
-
-    printf("pcan_CAN_GetValue: 0x%02X, 0x%02X (%s), 0x%02X, 0x%02X, 0x%02X (%s)\n",
-	   pcan_Channel, pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
-	   pcan_Buffer, pcan_BufferLength, pcan_result, pcan_status_lookup(pcan_result));
-    /* TODO: replace instances of "pcan_result" with "pcan_status" */
-
-    /* Put value into an the buffer object passed from N-API */
-    napi_value pcan_Buffer_value;
-    status = napi_create_uint32(env, pcan_Buffer, &pcan_Buffer_value);
+    status = napi_get_buffer_info(env, argv[2], (void**)&pcan_Buffer, &pcan_BufferLength);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[2], "value", pcan_Buffer_value);
-    assert(status == napi_ok);
+
+    /* Set value for CAN channel */
+    TPCANStatus pcan_result = 0;
+
+    pcan_result = CAN_SetValue(pcan_Channel, pcan_Parameter, pcan_Buffer, pcan_BufferLength);
+
+    /* Dump result to console */
+    printf("pcan_CAN_SetValue: \n"
+	   "  pcan_result = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_Parameter = 0x%02X (%s)\n"
+	   "  pcan_BufferLength = 0x%02zX\n"
+	   "  pcan_Buffer = ",
+	   pcan_result, pcan_status_lookup(pcan_result),
+	   pcan_Channel,
+	   pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
+	   pcan_BufferLength);
+
+    pcan_dump_buffer(pcan_Buffer, pcan_BufferLength);
+
+    printf("\n");
 
     /* Create a N-API value for the result and return it */
     napi_value result;
+    
     status = napi_create_int32(env, pcan_result, &result);
 
     return result;
@@ -458,7 +533,7 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 
 
 
-enum { descriptors_len = 7 };
+enum { descriptors_len = 8 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -476,6 +551,7 @@ napi_value Init(napi_env env, napi_value exports)
 	DECLARE_NAPI_METHOD("CAN_Read", pcan_CAN_Read),
 	DECLARE_NAPI_METHOD("CAN_Write", pcan_CAN_Write),
 	DECLARE_NAPI_METHOD("CAN_GetValue", pcan_CAN_GetValue),
+	DECLARE_NAPI_METHOD("CAN_SetValue", pcan_CAN_SetValue),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);
