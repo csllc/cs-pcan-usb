@@ -20,8 +20,8 @@ var pcan = require('bindings')('pcan.node')
 
 pcan.CAN_GetStatus(0x51);
 pcan.CAN_Initialize(0x51, 0x001C); /* 500kbaud */
-pcan.CAN_GetStatus(0x51);
 
+/*
 var msg = new TPCANMsg();
 var timestamp = new TPCANTimestamp();
 pcan.CAN_Read(0x51, msg, timestamp);
@@ -33,18 +33,25 @@ for (var byte in msg.data) {
   msg.data[byte] += 1;
 }
 
-/* Repeat message */
 pcan.CAN_Write(0x51, msg);
 
-/* Set parameter */
 var buffer = Buffer.from([0x56]);
 console.log(buffer);
 pcan.CAN_SetValue(0x51, 0x01, buffer);
 
-/* Get parameter */
 buffer = Buffer.alloc(0x17);
 pcan.CAN_GetValue(0x51, 0x0E, buffer);
 console.log(buffer);
+*/
+
+pcan.CAN_EnableEvent(0x51);
+
+for (;;) {}
+
+pcan.CAN_DisableEvent(0x51);
+
+
+
 
 pcan.CAN_Reset(0x51);
 pcan.CAN_GetStatus(0x51);

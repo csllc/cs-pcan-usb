@@ -2,7 +2,7 @@
   "targets": [
       {
           "target_name": "pcan",
-          "sources": [ "pcan.c", "helper.c" ],
+          "sources": [ "pcan.c", "helper.c", "pcan_thread.c" ],
           "msvs_settings": {
           },
 

@@ -2,12 +2,16 @@
 #include <node_api.h>
 #include <stdio.h>
 #include <windows.h>
+#include <process.h>
 
 #include "PCANBasic.h"
 
-#include "helper.h"
+#include "helper_pcan.h"
+#include "helper_napi.h"
+#include "pcan_thread.h"
 
-/* TODO: replace instances of "pcan_result" with "pcan_status" */
+
+
 
 napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 {
@@ -39,14 +43,14 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     printf("pcan_CAN_Initialize: pcan_Btr0Btr1 = 0x%02X\n", pcan_Btr0Btr1);
 
     /* Initialize CAN bus */
-    TPCANStatus pcan_result;
+    TPCANStatus pcan_status;
 
-    pcan_result = CAN_Initialize(pcan_Channel, pcan_Btr0Btr1, 0, 0, 0);
-    printf("pcan_CAN_Initialize: 0x%02X (%s)\n", pcan_result, pcan_status_lookup(pcan_result));
+    pcan_status = CAN_Initialize(pcan_Channel, pcan_Btr0Btr1, 0, 0, 0);
+    printf("pcan_CAN_Initialize: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
     
     /* Create N-API value for the result and return it */
     napi_value result;
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 
@@ -78,14 +82,14 @@ napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     /* Uninitialize CAN bus */
-    TPCANStatus pcan_result;
+    TPCANStatus pcan_status;
 
-    pcan_result = CAN_Uninitialize(pcan_Channel);
-    printf("pcan_CAN_Uninitialize: 0x%02X (%s)\n", pcan_result, pcan_status_lookup(pcan_result));
+    pcan_status = CAN_Uninitialize(pcan_Channel);
+    printf("pcan_CAN_Uninitialize: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
 
     /* Create a N-API value for the result and return it */
     napi_value result;
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 }
@@ -116,14 +120,14 @@ napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     /* Reset CAN bus */
-    TPCANStatus pcan_result;
+    TPCANStatus pcan_status;
 
-    pcan_result = CAN_Reset(pcan_Channel);
-    printf("pcan_CAN_Reset: 0x%02X (%s)\n", pcan_result, pcan_status_lookup(pcan_result));
+    pcan_status = CAN_Reset(pcan_Channel);
+    printf("pcan_CAN_Reset: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
 
     /* Create a N-API value for the result and return it */
     napi_value result;
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 }
@@ -218,10 +222,10 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     /* Read from CAN bus */
     TPCANMsg msg = { 0 };
     TPCANTimestamp timestamp = { 0 };
-    TPCANStatus pcan_result;
+    TPCANStatus pcan_status;
 
-    pcan_result = CAN_Read(pcan_Channel, &msg, &timestamp);
-    printf("pcan_CAN_Read: 0x%02X (%s)\n", pcan_result, pcan_status_lookup(pcan_result));
+    pcan_status = CAN_Read(pcan_Channel, &msg, &timestamp);
+    printf("pcan_CAN_Read: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
 
     pcan_dump_msg(&msg);
     pcan_dump_timestamp(&timestamp);
@@ -273,7 +277,7 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
 
     /* Create a N-API value for the result and return it */
     napi_value result;
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 }
@@ -353,16 +357,16 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
     memcpy(msg.DATA, msg_tmp_DATA, msg.LEN);
 
     /* Write to CAN bus */
-    TPCANStatus pcan_result;
+    TPCANStatus pcan_status;
 
-    pcan_result = CAN_Write(pcan_Channel, &msg);
-    printf("pcan_CAN_Write: 0x%02X (%s)\n", pcan_result, pcan_status_lookup(pcan_result));
+    pcan_status = CAN_Write(pcan_Channel, &msg);
+    printf("pcan_CAN_Write: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
 
     pcan_dump_msg(&msg);
 
     /* Create a N-API value for the result and return it */
     napi_value result;
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
     
     return result;
 }
@@ -420,18 +424,18 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     /* Get requested value from CAN channel */
-    TPCANStatus pcan_result = 0;
+    TPCANStatus pcan_status = 0;
 
-    pcan_result = CAN_GetValue(pcan_Channel, pcan_Parameter, pcan_Buffer, pcan_BufferLength);
+    pcan_status = CAN_GetValue(pcan_Channel, pcan_Parameter, pcan_Buffer, pcan_BufferLength);
 
     /* Dump data to console */
     printf("pcan_CAN_GetValue: \n"
-	   "  pcan_result = 0x%02X (%s)\n"
+	   "  pcan_status = 0x%02X (%s)\n"
 	   "  pcan_Channel = 0x%02X\n"
 	   "  pcan_Parameter = 0x%02X (%s)\n"
 	   "  pcan_BufferLength = 0x%02zX\n"
 	   "  pcan_Buffer = ",
-	   pcan_result, pcan_status_lookup(pcan_result),
+	   pcan_status, pcan_status_lookup(pcan_status),
 	   pcan_Channel,
 	   pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
 	   pcan_BufferLength);
@@ -449,10 +453,11 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
     /* Create a N-API value for the result and return it */
     napi_value result;
     
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 }
+
 
 
 
@@ -465,7 +470,7 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
     size_t argc = 3; /* TODO: make these constants somewhere, instead of magic numbers */
     napi_value argv[3];
 
-        status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
     assert(status == napi_ok);
 
     if (argc != 3) {
@@ -503,18 +508,18 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     /* Set value for CAN channel */
-    TPCANStatus pcan_result = 0;
+    TPCANStatus pcan_status = 0; /* TODO: is there a better initializer value? */
 
-    pcan_result = CAN_SetValue(pcan_Channel, pcan_Parameter, pcan_Buffer, pcan_BufferLength);
+    pcan_status = CAN_SetValue(pcan_Channel, pcan_Parameter, pcan_Buffer, pcan_BufferLength);
 
     /* Dump result to console */
     printf("pcan_CAN_SetValue: \n"
-	   "  pcan_result = 0x%02X (%s)\n"
+	   "  pcan_status = 0x%02X (%s)\n"
 	   "  pcan_Channel = 0x%02X\n"
 	   "  pcan_Parameter = 0x%02X (%s)\n"
 	   "  pcan_BufferLength = 0x%02zX\n"
 	   "  pcan_Buffer = ",
-	   pcan_result, pcan_status_lookup(pcan_result),
+	   pcan_status, pcan_status_lookup(pcan_status),
 	   pcan_Channel,
 	   pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
 	   pcan_BufferLength);
@@ -526,7 +531,7 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
     /* Create an N-API value for the result and return it */
     napi_value result;
     
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 }
@@ -543,7 +548,7 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
     /* Create an N-API value for the result and return it */
     napi_value result;
 
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, PCAN_ERROR_OK, &result);
 
     return result;
 }
@@ -560,7 +565,7 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
     /* Create an N-API value for the result and return it */
     napi_value result;
 
-    status = napi_create_int32(env, pcan_result, &result);
+    status = napi_create_int32(env, PCAN_ERROR_OK, &result);
 
     return result;
 }
@@ -568,7 +573,84 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
 
 
 
-enum { descriptors_len = 10 };
+/* TODO: Accept callback function */
+napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32) */
+    size_t argc = 1;
+    napi_value argv[1];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 1) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* Enable CAN Bus receive event */
+    int pcan_status;
+
+    pcan_status = pcan_EnableEvent(pcan_Channel);    
+    printf("pcan_CAN_EnableEvent: 0x%02X\n", pcan_status);
+
+    /* Create a N-API value for the result and return it */
+    napi_value result;
+    status = napi_create_int32(env, pcan_status, &result);
+
+    return result;
+}
+
+
+
+
+napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32) */
+    size_t argc = 1;
+    napi_value argv[1];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 1) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* Disable CAN Bus receive event */
+    int pcan_status;
+
+    pcan_status = pcan_DisableEvent(pcan_Channel);    
+    printf("pcan_CAN_DisableEvent: 0x%02X\n", pcan_status);
+
+    /* Create a N-API value for the result and return it */
+    napi_value result;
+    status = napi_create_int32(env, pcan_status, &result);
+
+    return result;
+}
+
+
+
+
+enum { descriptors_len = 12 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -579,6 +661,7 @@ napi_value Init(napi_env env, napi_value exports)
 
     /* Build array of property descriptors */
     napi_property_descriptor descriptors[descriptors_len] = {
+	/* Vendor functions */
 	DECLARE_NAPI_METHOD("CAN_Initialize", pcan_CAN_Initialize),
 	DECLARE_NAPI_METHOD("CAN_Uninitialize", pcan_CAN_Uninitialize),
 	DECLARE_NAPI_METHOD("CAN_Reset", pcan_CAN_Reset),
@@ -589,6 +672,9 @@ napi_value Init(napi_env env, napi_value exports)
 	DECLARE_NAPI_METHOD("CAN_SetValue", pcan_CAN_SetValue),
 	DECLARE_NAPI_METHOD("CAN_FilterMessages", pcan_CAN_FilterMessages),
 	DECLARE_NAPI_METHOD("CAN_GetErrorText", pcan_CAN_GetErrorText),
+	/* CS functions */
+	DECLARE_NAPI_METHOD("CAN_EnableEvent", pcan_CAN_EnableEvent),
+	DECLARE_NAPI_METHOD("CAN_DisableEvent", pcan_CAN_DisableEvent),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);
@@ -598,3 +684,6 @@ napi_value Init(napi_env env, napi_value exports)
 }
 
 NAPI_MODULE(NODE_GYP_MODULE_NAME, Init);
+
+
+
