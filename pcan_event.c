@@ -3,16 +3,18 @@
 #include <windows.h>
 
 #include "PCANBasic.h"
+#include "pcan.h"
 #include "pcan_event.h"
 #include "pcan_thread.h"
 #include "pcan_helper.h"
 
 HANDLE pcan_read_event = INVALID_HANDLE_VALUE;
-HANDLE pcan_thread_event = INVALID_HANDLE_VALUE;
+HANDLE pcan_spawn_event = INVALID_HANDLE_VALUE;
+HANDLE pcan_exit_event = INVALID_HANDLE_VALUE;
 HANDLE pcan_thread = INVALID_HANDLE_VALUE;
 DWORD pcan_thread_id = 0;
 
-int pcan_EnableEvent(TPCANHandle pcan_Channel)
+int pcan_EnableEvent(TPCANHandle pcan_Channel, void *callback)
 {
     int ret = 0;
 
@@ -55,24 +57,41 @@ int pcan_EnableEvent(TPCANHandle pcan_Channel)
 	return 1;
     }
 
-    /* Create event object that main thread will use to communicate with the 
-       worker thread */
-    pcan_thread_event = CreateEvent(&pcan_security_attr, /* lpEventAttributes */
-				    false, /* bManualReset */
-				    false, /* bInitialState */
-				    "pcan_thread_event");
+    /* Create event object that worker thread will use to indicate it has started */
+    pcan_spawn_event = CreateEvent(&pcan_security_attr, /* lpEventAttributes */
+				   false, /* bManualReset */
+				   false, /* bInitialState */
+				   "pcan_spawn_event");
 
-    if (pcan_thread_event == 0) {
-	printf("pcan_EnableEvent: Error at CreateEvent (pcan_thread_event) (0x%02X)",
+    if (pcan_spawn_event == 0) {
+	printf("pcan_EnableEvent: Error at CreateEvent (pcan_spawn_event) (0x%02X)",
 	       GetLastError());
 	return 1;
     }
+
+    /* Create event object that main thread will use to stop worker thread */
+    pcan_exit_event = CreateEvent(&pcan_security_attr, /* lpEventAttributes */
+				   false, /* bManualReset */
+				   false, /* bInitialState */
+				   "pcan_exit_event");
+
+    if (pcan_exit_event == 0) {
+	printf("pcan_EnableEvent: Error at CreateEvent (pcan_exit_event) (0x%02X)",
+	       GetLastError());
+	return 1;
+    }
+
+    /* Pack paramters into struct to be passed to worker thread */
+    thread_params_t pcan_thread_params = {
+	pcan_Channel,
+	callback
+    };
 
     /* Spawn the worker thread that will monitor the event */
     pcan_thread = CreateThread(&pcan_security_attr, /* lpThreadAttributes */
 			       0, /* dwStackSize */
 			       &pcan_thread_proc, /* lpStartAddress */
-			       (void*)pcan_Channel, /* lpParameter */
+			       &pcan_thread_params, /* lpParameter */
 			       0, /* dwCreationFlags */
 			       &pcan_thread_id); /* lpThreadId */
 
@@ -85,7 +104,7 @@ int pcan_EnableEvent(TPCANHandle pcan_Channel)
        was successfully started */
     printf("pcan_EnableEvent: Waiting for worker thread to start...\n");
 
-    ret = WaitForSingleObject(pcan_thread_event, 1000);
+    ret = WaitForSingleObject(pcan_spawn_event, 1000);
     switch (ret) {
     case WAIT_OBJECT_0:
 	break;
@@ -134,7 +153,7 @@ int pcan_DisableEvent(TPCANHandle pcan_Channel)
 			       &dummy_event, sizeof(dummy_event));
 
     /* Stop the thread */  
-    ret = SetEvent(pcan_thread_event);
+    ret = SetEvent(pcan_exit_event);
     if (ret == 0) {
 	printf("pcan_DisableEvent: Error at SetEvent (0x%02X)\n",
 	       GetLastError());
@@ -188,12 +207,20 @@ int pcan_DisableEvent(TPCANHandle pcan_Channel)
 	return 1;
     }
 
-    ret = CloseHandle(pcan_thread_event);
+    ret = CloseHandle(pcan_spawn_event);
     if (ret == 0) {
-	printf("pcan_DisableEvent: Error at CloseHandle(pcan_thread_event): %i\n",
+	printf("pcan_DisableEvent: Error at CloseHandle(pcan_spawn_event): %i\n",
 	       GetLastError());
 	return 1;
     }
+
+    ret = CloseHandle(pcan_exit_event);
+    if (ret == 0) {
+	printf("pcan_DisableEvent: Error at CloseHandle(pcan_exit_event): %i\n",
+	       GetLastError());
+	return 1;
+    }
+
 
     ret = CloseHandle(pcan_thread);
     if (ret == 0) {

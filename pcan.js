@@ -1,3 +1,6 @@
+const events = require('events');
+const process = require('process');
+
 function TPCANMsg(id = 0,
 		  msgtype = 0,
 		  len = 0,
@@ -16,15 +19,34 @@ function TPCANTimestamp(millis = 0,
   this.micros = 0;
 }
 
-var pcan = require('bindings')('pcan.node')
+let channel = 0x51;
+let baud = 0x001C; /* 500 kbaud */
 
-pcan.CAN_GetStatus(0x51);
-pcan.CAN_Initialize(0x51, 0x001C); /* 500kbaud */
+var pcan = require('bindings')('pcan.node');
 
-/*
+const canEmitter = new events.EventEmitter();
+
 var msg = new TPCANMsg();
 var timestamp = new TPCANTimestamp();
-pcan.CAN_Read(0x51, msg, timestamp);
+
+/*
+process.on('SIGINT', function () {
+  console.log("SIGINT received");
+  pcan.CAN_DisableEvent(0x51);
+  
+  pcan.CAN_Reset(0x51);
+  pcan.CAN_GetStatus(0x51);
+
+  pcan.CAN_Uninitialize(0x51);
+  process.exit(0);
+});
+*/
+
+pcan.CAN_Initialize(channel, baud);
+pcan.CAN_GetStatus(channel);
+
+/*
+pcan.CAN_Read(channel, msg, timestamp);
 
 console.log(msg);
 console.log(timestamp);
@@ -34,7 +56,9 @@ for (var byte in msg.data) {
 }
 
 pcan.CAN_Write(0x51, msg);
+*/
 
+/*
 var buffer = Buffer.from([0x56]);
 console.log(buffer);
 pcan.CAN_SetValue(0x51, 0x01, buffer);
@@ -44,16 +68,13 @@ pcan.CAN_GetValue(0x51, 0x0E, buffer);
 console.log(buffer);
 */
 
-pcan.CAN_EnableEvent(0x51);
 
-for (;;) {}
+pcan.CAN_EnableEvent(channel, function () {
+  canEmitter.emit('receive');
+});
 
-pcan.CAN_DisableEvent(0x51);
+canEmitter.on('receive', function () {
+  pcan.CAN_Read(channel, msg, timestamp);
+  //console.log(msg);
+});
 
-
-
-
-pcan.CAN_Reset(0x51);
-pcan.CAN_GetStatus(0x51);
-
-pcan.CAN_Uninitialize(0x51);

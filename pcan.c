@@ -6,10 +6,11 @@
 
 #include "PCANBasic.h"
 
-#include "helper_pcan.h"
-#include "helper_napi.h"
+#include "pcan.h"
+#include "pcan_helper.h"
 #include "pcan_thread.h"
-
+#include "pcan_event.h"
+#include "napi_helper.h"
 
 
 
@@ -32,7 +33,7 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     }
 
     /* Retreive arguments */
-    int32_t pcan_Channel; /* TODO: Should we just be using uint64_t for everything? */
+    int32_t pcan_Channel;
     status = napi_get_value_int32(env, argv[0], &pcan_Channel);
     assert(status == napi_ok);
     printf("pcan_CAN_Initialize: pcan_Channel = 0x%02X\n", pcan_Channel);
@@ -53,7 +54,6 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     status = napi_create_int32(env, pcan_status, &result);
 
     return result;
-
 }
 
 
@@ -225,10 +225,10 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     TPCANStatus pcan_status;
 
     pcan_status = CAN_Read(pcan_Channel, &msg, &timestamp);
-    printf("pcan_CAN_Read: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    //printf("pcan_CAN_Read: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
 
-    pcan_dump_msg(&msg);
-    pcan_dump_timestamp(&timestamp);
+    //pcan_dump_msg(&msg);
+    //pcan_dump_timestamp(&timestamp);
 
     /* Put read values into objects passed from N-API */
     /* arvg[1] - message buffer */
@@ -573,33 +573,58 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
 
 
 
-/* TODO: Accept callback function */
+napi_threadsafe_function pcan_callback;
 napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
 
     /* Get callback info and arguments:
-       TPCANHandle Channel (int32) */
-    size_t argc = 1;
-    napi_value argv[1];
+       TPCANHandle Channel (int32)
+       function callback (N-API) */
+    size_t argc = 2;
+    napi_value argv[2];
 
     status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
     assert(status == napi_ok);
 
-    if (argc != 1) {
+    if (argc != 2) {
 	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
 	return 0;
     }
 
     /* Retrieve arguments */
+    /* argv[0] - channel */
     int32_t pcan_Channel;
     status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+    /* argv[1] - callback */
+    napi_valuetype pcan_callback_type;
+    status = napi_typeof(env, argv[1], &pcan_callback_type);
+    assert(status == napi_ok);
+
+    /* Create resource name string, used below */
+    napi_value async_resource_name;
+    status = napi_create_string_utf8(env, "pcan_callback",
+				     NAPI_AUTO_LENGTH, &async_resource_name);
+    assert(status == napi_ok);
+
+    /* Create thread-safe function to use as a callback */
+    status = napi_create_threadsafe_function(env,
+					     argv[1],
+					     0, /* async_resource */
+					     async_resource_name,
+					     0, /* max_queue_size */
+					     1, /* initial_thread_count */
+					     0, /* thread_finalize_data */
+					     0, /* thread_finalize_cb */
+					     0, /* context */
+					     0, /* call_js_cb */
+					     &pcan_callback); /* pcan.c global */
     assert(status == napi_ok);
 
     /* Enable CAN Bus receive event */
     int pcan_status;
-
-    pcan_status = pcan_EnableEvent(pcan_Channel);    
+    pcan_status = pcan_EnableEvent(pcan_Channel, pcan_CAN_EventCallback);
     printf("pcan_CAN_EnableEvent: 0x%02X\n", pcan_status);
 
     /* Create a N-API value for the result and return it */
@@ -645,6 +670,21 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
     status = napi_create_int32(env, pcan_status, &result);
 
     return result;
+}
+
+
+
+
+void pcan_CAN_EventCallback(int channel)
+{
+    napi_status status;
+
+    printf("pcan_CAN_EventCallback()\n");
+
+    status = napi_call_threadsafe_function(pcan_callback, 0, true);
+    assert(status == napi_ok);
+
+    return;
 }
 
 

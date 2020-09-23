@@ -11,6 +11,6 @@ void pcan_dump_buffer(BYTE *buffer, size_t buffer_len);
 char *pcan_msgtype_lookup(TPCANMessageType type);
 void pcan_dump_timestamp(TPCANTimestamp *timestamp);
 char *pcan_parameter_lookup(TPCANParameter parameter);
-void pcan_dump_thread_data(thread_data_t *thread_data);
+void pcan_dump_thread_params(thread_params_t *thread_params);
 
 #endif /* _HELPER_PCAN,_H_ */

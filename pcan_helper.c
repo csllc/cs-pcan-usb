@@ -234,12 +234,14 @@ char *pcan_parameter_lookup(TPCANParameter parameter)
     
 
 
-void pcan_dump_thread_data(thread_data_t *thread_data)
+void pcan_dump_thread_params(thread_params_t *thread_params)
 {
-    printf("thread_data {\n"
+    printf("thread_params {\n"
 	   "  can_channel = 0x%02X\n"
+	   "  callback = %p\n"
 	   "}\n",
-	   thread_data->can_channel);
+	   thread_params->can_channel,
+	   thread_params->callback);
 
     return;
 }

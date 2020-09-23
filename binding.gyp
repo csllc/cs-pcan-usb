@@ -2,7 +2,11 @@
   "targets": [
       {
           "target_name": "pcan",
-          "sources": [ "pcan.c", "helper.c", "pcan_thread.c" ],
+          "sources": [ "pcan.c",
+                       "pcan_helper.c",
+                       "pcan_event.c",
+                       "pcan_thread.c",
+                       "napi_helper.c" ],
           "msvs_settings": {
           },
 

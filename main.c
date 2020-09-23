@@ -2,8 +2,10 @@
 
 #include "PCANBasic.h"
 #include "pcan_helper.h"
+#include "main.h"
 
-int main(void) {
+int main(void)
+{
     int channel = 0x51;
     TPCANStatus pcan_result;
 
@@ -13,7 +15,7 @@ int main(void) {
     pcan_result = CAN_GetStatus(channel);
     printf("CAN_GetStatus: 0x%02X (%s)\n", pcan_result, pcan_status_lookup(pcan_result));
     
-    pcan_result = pcan_EnableEvent(channel);
+    pcan_result = pcan_EnableEvent(channel, &callback);
     printf("pcan_EnableEvent: %i \n", pcan_result);
 
     Sleep(10000);
@@ -30,3 +32,28 @@ int main(void) {
     return 0;
 }
     
+
+
+
+void callback(int channel)
+{
+    TPCANStatus status = PCAN_ERROR_OK;
+    TPCANMsg msg = { 0 };
+    TPCANTimestamp timestamp = { 0 };
+    
+    do {
+	ZeroMemory(&msg, sizeof(msg));
+	ZeroMemory(&timestamp, sizeof(timestamp));
+
+	status = CAN_Read(channel, &msg, &timestamp);
+
+	if (status == PCAN_ERROR_OK) {
+	    //printf("---\n");
+	    pcan_dump_msg(&msg);
+	    //pcan_dump_timestamp(&timestamp);
+	}
+    } while (status == PCAN_ERROR_OK);
+    
+    return;
+}
+
