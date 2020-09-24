@@ -14,6 +14,7 @@
 
 
 
+
 napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 {
     napi_status status;
@@ -21,13 +22,13 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     /* Get callback info and argments: 
        TPCANHandle Channel (int32)
        TPCANBaudrate Btr0Btr1 (int32) */
-    size_t argc = 2;
-    napi_value argv[2];
+    size_t argc = CAN_INITIALIZE_ARGC;
+    napi_value argv[CAN_INITIALIZE_ARGC];
 
     status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
     assert(status == napi_ok);
 
-    if (argc != 2) {
+    if (argc != CAN_INITIALIZE_ARGC) {
 	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
 	return 0;
     }
@@ -45,9 +46,9 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 
     /* Initialize CAN bus */
     TPCANStatus pcan_status;
-
     pcan_status = CAN_Initialize(pcan_Channel, pcan_Btr0Btr1, 0, 0, 0);
-    printf("pcan_CAN_Initialize: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    printf("pcan_CAN_Initialize: 0x%02X (%s)\n",
+	   pcan_status, pcan_status_lookup(pcan_status));
     
     /* Create N-API value for the result and return it */
     napi_value result;
@@ -543,12 +544,66 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
 
-    printf("pcan_CAN_FilterMessages: Not yet implemented.\n");
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32)
+       DWORD FromID (int32)
+       DWORD ToID (int32)
+       TPCANMode Mode (int32) */
+    size_t argc = 4;
+    napi_value argv[4];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 4) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - Channel */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - FromID */
+    int32_t pcan_FromID;
+    status = napi_get_value_int32(env, argv[1], &pcan_FromID);
+    assert(status == napi_ok);
+
+    /* argv[2] - ToID */
+    int32_t pcan_ToID;
+    status = napi_get_value_int32(env, argv[2], &pcan_ToID);
+    assert(status == napi_ok);
+
+    /* argv[3] - Mode */
+    int32_t pcan_Mode;
+    status = napi_get_value_int32(env, argv[3], &pcan_Mode);
+    assert(status == napi_ok);
+
+    /* Set or ammend the CAN message filter */
+    TPCANStatus pcan_status = 0;
     
+    pcan_status = CAN_FilterMessages(pcan_Channel, pcan_FromID, pcan_ToID, pcan_Mode);
+
+    /* Dump result to console */
+    printf("pcan_CAN_FilterMessages: \n"
+	   "  pcan_status = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_FromID = 0x%08X\n"
+	   "  pcan_ToID = 0x%08X\n"
+	   "  pcan_Mode = 0x%02X\n",
+	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_Channel,
+	   pcan_FromID,
+	   pcan_ToID,
+	   pcan_Mode);
+
     /* Create an N-API value for the result and return it */
     napi_value result;
 
-    status = napi_create_int32(env, PCAN_ERROR_OK, &result);
+    status = napi_create_int32(env, pcan_status, &result);
+    assert(status == napi_ok);
 
     return result;
 }
@@ -597,6 +652,7 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
     int32_t pcan_Channel;
     status = napi_get_value_int32(env, argv[0], &pcan_Channel);
     assert(status == napi_ok);
+
     /* argv[1] - callback */
     napi_valuetype pcan_callback_type;
     status = napi_typeof(env, argv[1], &pcan_callback_type);
@@ -690,7 +746,79 @@ void pcan_CAN_EventCallback(int channel)
 
 
 
-enum { descriptors_len = 12 };
+napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32)
+       DWORD AcceptanceCode (uint64)
+       DWORD AcceptanceMask (uint64) */
+    size_t argc = 3;
+    napi_value argv[3];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 3) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - channel */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - AcceptanceCode */
+    uint32_t pcan_AcceptanceCode;
+    status = napi_get_value_int32(env, argv[1], (int32_t*)&pcan_AcceptanceCode);
+    assert(status == napi_ok);
+
+    /* argv[2] - AcceptanceMask */
+    uint32_t pcan_AcceptanceMask; /* TODO: use uint32_t or uint64_t universally where appropriate, and cast inside napi_get_value_int32 call */
+    status = napi_get_value_int32(env, argv[2], (int32_t*)&pcan_AcceptanceMask);
+    assert(status == napi_ok);
+
+    /* Build 64-bit acceptance filter value */
+    uint64_t pcan_AcceptanceFilter = 0;
+    /* Take note - pcan_AcceptanceMask's bits are flipped from "don't care" to
+       "do care" */
+    pcan_AcceptanceFilter |= ((uint64_t)pcan_AcceptanceCode << 0x20);
+    pcan_AcceptanceFilter |= ((uint64_t)(~pcan_AcceptanceMask));
+
+    /* Set the acceptance filter through the API */
+    TPCANStatus pcan_status;
+
+    pcan_status = CAN_SetValue(pcan_Channel, PCAN_ACCEPTANCE_FILTER_29BIT,
+			       &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
+
+    printf("pcan_CAN_AcceptanceFilter29Bit:\n"
+	   "  pcan_status = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_AcceptanceCode = 0x%08X\n"
+	   "  pcan_AcceptanceMask = 0x%08X\n"
+	   "  pcan_AcceptanceFilter = 0x%016llX\n",
+	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_Channel,
+	   pcan_AcceptanceCode,
+	   pcan_AcceptanceMask,
+	   pcan_AcceptanceFilter);
+
+    /* Create an N-API value for the result and return it */
+    napi_value result;
+    
+    status = napi_create_int32(env, pcan_status, &result);
+    assert(status == napi_ok);
+
+    return result;    
+}
+
+
+
+
+enum { descriptors_len = 13 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -715,6 +843,7 @@ napi_value Init(napi_env env, napi_value exports)
 	/* CS functions */
 	DECLARE_NAPI_METHOD("CAN_EnableEvent", pcan_CAN_EnableEvent),
 	DECLARE_NAPI_METHOD("CAN_DisableEvent", pcan_CAN_DisableEvent),
+	DECLARE_NAPI_METHOD("CAN_AcceptanceFilter29Bit", pcan_CAN_AcceptanceFilter29Bit),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);

@@ -70,7 +70,6 @@ DWORD WINAPI pcan_thread_proc(LPVOID lpParam)
 				     false, /* bWaitAll */
 				     INFINITE); /* dwMilliseconds */
 
-	printf("ret = %i\n", ret);
 	if (ret & WAIT_ABANDONED_0) {
 	    event_index = (ret ^ WAIT_ABANDONED_0);
 	    printf("pcan_thread_proc: WAIT_ABANDONED_0 %i\n", event_index);

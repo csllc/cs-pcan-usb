@@ -1,5 +1,6 @@
 const events = require('events');
 const process = require('process');
+const pcan = require('bindings')('pcan.node');
 
 function TPCANMsg(id = 0,
 		  msgtype = 0,
@@ -22,14 +23,11 @@ function TPCANTimestamp(millis = 0,
 let channel = 0x51;
 let baud = 0x001C; /* 500 kbaud */
 
-var pcan = require('bindings')('pcan.node');
-
 const canEmitter = new events.EventEmitter();
 
 var msg = new TPCANMsg();
 var timestamp = new TPCANTimestamp();
 
-/*
 process.on('SIGINT', function () {
   console.log("SIGINT received");
   pcan.CAN_DisableEvent(0x51);
@@ -40,10 +38,13 @@ process.on('SIGINT', function () {
   pcan.CAN_Uninitialize(0x51);
   process.exit(0);
 });
-*/
+
 
 pcan.CAN_Initialize(channel, baud);
+pcan.CAN_SetValue(channel, 0x04 /* PCAN_MESSAGE_FILTER */, Buffer.from([0x00]));
+pcan.CAN_AcceptanceFilter29Bit(channel, 0x81, 0xF8);
 pcan.CAN_GetStatus(channel);
+
 
 /*
 pcan.CAN_Read(channel, msg, timestamp);
@@ -68,6 +69,26 @@ pcan.CAN_GetValue(0x51, 0x0E, buffer);
 console.log(buffer);
 */
 
+//let PCAN_MODE_STANDARD = 0x00;
+//let PCAN_MODE_EXTENDED = 0x02;
+
+//buffer = Buffer.alloc(0x01);
+//pcan.CAN_GetValue(channel, 0x04 /* PCAN_MESSAGE_FILTER */, buffer);
+//console.log(buffer);
+
+//pcan.CAN_FilterMessages(channel, 0, 0x00FFFFFF, PCAN_MODE_EXTENDED);
+//pcan.CAN_FilterMessages(channel, 0x00EF8180, 0x00EF8180, PCAN_MODE_EXTENDED);
+//pcan.CAN_FilterMessages(channel, 0, 0, PCAN_MODE_EXTENDED);
+//buffer = Buffer.from([0x00])
+//pcan.CAN_SetValue(channel, 0x04, buffer);
+
+//pcan.CAN_GetValue(channel, 0x04 /* PCAN_MESSAGE_FILTER */, buffer);
+//console.log(buffer);
+
+//pcan.CAN_FilterMessages(channel, 0, 0x00EF817F, PCAN_MODE_EXTENDED);
+//pcan.CAN_FilterMessages(channel, 0x00EF8181, 0x00FFFFFF, PCAN_MODE_EXTENDED);
+
+
 
 pcan.CAN_EnableEvent(channel, function () {
   canEmitter.emit('receive');
@@ -75,6 +96,16 @@ pcan.CAN_EnableEvent(channel, function () {
 
 canEmitter.on('receive', function () {
   pcan.CAN_Read(channel, msg, timestamp);
-  //console.log(msg);
+  console.log(JSON.stringify(msg, (key, value) => {
+    if ((typeof value === 'number') && (key == "id")) {
+      return value.toString(16).toUpperCase().padStart(8, '0');
+    } else if (typeof value === 'number') {
+      return value.toString(16).toUpperCase().padStart(2, '0');
+    } else {
+      return value;
+    }
+  }));
 });
+
+
 
