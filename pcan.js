@@ -45,6 +45,11 @@ pcan.CAN_SetValue(channel, 0x04 /* PCAN_MESSAGE_FILTER */, Buffer.from([0x00]));
 pcan.CAN_AcceptanceFilter29Bit(channel, 0x81, 0xF8);
 pcan.CAN_GetStatus(channel);
 
+var error = {};
+error.buffer = "";
+pcan.CAN_GetErrorText(0, 0, error);
+console.log(error);
+
 
 /*
 pcan.CAN_Read(channel, msg, timestamp);

@@ -614,13 +614,63 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
 napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
+    
+    /* Get callback info and arguments:
+       TPCANStatus Error
+       WORD Language
+       LPSTR Buffer */
+    size_t argc = 3;
+    napi_value argv[3];
 
-    printf("pcan_CAN_GetErrorText: Not yet implemented.\n");
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 3) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - Error */
+    TPCANStatus pcan_Error;
+    status = napi_get_value_int32(env, argv[0], (int32_t*)&pcan_Error);
+    assert(status == napi_ok);
+
+    /* argv[1] - Language */
+    int32_t pcan_Language;
+    status = napi_get_value_int32(env, argv[1], &pcan_Language);
+    assert(status == napi_ok);
+
+    /* argv[2] - Buffer */
+    char pcan_Buffer[256];
+
+    /* Call API to get error text */
+    TPCANStatus pcan_status;
+
+    pcan_status = CAN_GetErrorText(pcan_Error, pcan_Language, pcan_Buffer);
+
+    printf("pcan_CAN_GetErrorText:\n"
+	   "  pcan_status = %i (%s)\n"
+	   "  pcan_Error = %i\n"
+	   "  pcan_Language = %i\n"
+	   "  pcan_Buffer = \"%s\"\n",
+	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_Error,
+	   pcan_Language,
+	   pcan_Buffer);
+
+    /* Copy result into 'buffer' property of object passed from N-API */
+    napi_value pcan_Buffer_value;
+
+    status = napi_create_string_utf8(env, pcan_Buffer, NAPI_AUTO_LENGTH, &pcan_Buffer_value);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[2], "buffer", pcan_Buffer_value);
+    assert(status == napi_ok);
     
     /* Create an N-API value for the result and return it */
     napi_value result;
 
-    status = napi_create_int32(env, PCAN_ERROR_OK, &result);
+    status = napi_create_int32(env, pcan_status, &result);
 
     return result;
 }
