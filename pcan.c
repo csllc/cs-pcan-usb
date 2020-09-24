@@ -746,6 +746,77 @@ void pcan_CAN_EventCallback(int channel)
 
 
 
+napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get callback info and arguments:
+       TPCANHandle Channel (int32)
+       DWORD AcceptanceCode (uint64)
+       DWORD AcceptanceMask (uint64) */
+    size_t argc = 3;
+    napi_value argv[3];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 3) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - channel */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - AcceptanceCode */
+    uint32_t pcan_AcceptanceCode;
+    status = napi_get_value_int32(env, argv[1], (int32_t*)&pcan_AcceptanceCode);
+    assert(status == napi_ok);
+
+    /* argv[2] - AcceptanceMask */
+    uint32_t pcan_AcceptanceMask; /* TODO: use uint32_t or uint64_t universally where appropriate, and cast inside napi_get_value_int32 call */
+    status = napi_get_value_int32(env, argv[2], (int32_t*)&pcan_AcceptanceMask);
+    assert(status == napi_ok);
+
+    /* Build 64-bit acceptance filter value */
+    uint64_t pcan_AcceptanceFilter = 0;
+    pcan_AcceptanceFilter |= ((uint64_t)pcan_AcceptanceCode << 0x20);
+    pcan_AcceptanceFilter |= ((uint64_t)(~pcan_AcceptanceMask));
+    /* pcan_AcceptanceMask's bits are flipped from "don't care" to "do care" */
+
+    /* Set the acceptance filter through the API */
+    TPCANStatus pcan_status;
+
+    pcan_status = CAN_SetValue(pcan_Channel, PCAN_ACCEPTANCE_FILTER_11BIT,
+			       &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
+
+    printf("pcan_CAN_AcceptanceFilter11Bit:\n"
+	   "  pcan_status = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_AcceptanceCode = 0x%08X\n"
+	   "  pcan_AcceptanceMask = 0x%08X\n"
+	   "  pcan_AcceptanceFilter = 0x%016llX\n",
+	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_Channel,
+	   pcan_AcceptanceCode,
+	   pcan_AcceptanceMask,
+	   pcan_AcceptanceFilter);
+
+    /* Create an N-API value for the result and return it */
+    napi_value result;
+    
+    status = napi_create_int32(env, pcan_status, &result);
+    assert(status == napi_ok);
+
+    return result;    
+}
+
+
+
+
 napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 {
     napi_status status;
@@ -783,10 +854,9 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 
     /* Build 64-bit acceptance filter value */
     uint64_t pcan_AcceptanceFilter = 0;
-    /* Take note - pcan_AcceptanceMask's bits are flipped from "don't care" to
-       "do care" */
     pcan_AcceptanceFilter |= ((uint64_t)pcan_AcceptanceCode << 0x20);
     pcan_AcceptanceFilter |= ((uint64_t)(~pcan_AcceptanceMask));
+    /* pcan_AcceptanceMask's bits are flipped from "don't care" to "do care" */
 
     /* Set the acceptance filter through the API */
     TPCANStatus pcan_status;
@@ -818,7 +888,7 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 
 
 
-enum { descriptors_len = 13 };
+enum { descriptors_len = 14 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -840,10 +910,11 @@ napi_value Init(napi_env env, napi_value exports)
 	DECLARE_NAPI_METHOD("CAN_SetValue", pcan_CAN_SetValue),
 	DECLARE_NAPI_METHOD("CAN_FilterMessages", pcan_CAN_FilterMessages),
 	DECLARE_NAPI_METHOD("CAN_GetErrorText", pcan_CAN_GetErrorText),
-	/* CS functions */
+	/* Control Solutions functions */
 	DECLARE_NAPI_METHOD("CAN_EnableEvent", pcan_CAN_EnableEvent),
 	DECLARE_NAPI_METHOD("CAN_DisableEvent", pcan_CAN_DisableEvent),
 	DECLARE_NAPI_METHOD("CAN_AcceptanceFilter29Bit", pcan_CAN_AcceptanceFilter29Bit),
+	DECLARE_NAPI_METHOD("CAN_AcceptanceFilter11Bit", pcan_CAN_AcceptanceFilter11Bit),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);
