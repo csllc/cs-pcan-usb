@@ -5,7 +5,8 @@
           "sources": [ "pcan.c",
                        "pcan_helper.c",
                        "pcan_event.c",
-                       "napi_helper.c" ],
+                       "napi_helper.c",
+                       "common_helper.c" ],
           "msvs_settings": {
           },
 

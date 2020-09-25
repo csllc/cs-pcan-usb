@@ -6,8 +6,8 @@
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
 
-#ifndef _HELPER_PCAN_H_
-#define _HELPER_PCAN_H_
+#ifndef _PCAN_HELPER_H_
+#define _PCAN_HELPER_H_
 
 #include <PCANBasic.h>   // provide PCAN-Basic constants and types
 #include <stdint.h>      // provide uintX_t
@@ -17,13 +17,6 @@
 
 // ----------------------------------- // -----------------------------------
 // Definitions
-
-// Integer constant + string pair for lookup tables
-typedef struct
-{
-    const int value;
-    const char* string;
-} strLookup_t;
 
 
 
@@ -91,5 +84,5 @@ uint8_t pcanDLCDecode(uint8_t dlc);
 
 
 
-#endif // _HELPER_PCAN_H_
+#endif // _PCAN_HELPER_H_
 

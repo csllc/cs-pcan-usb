@@ -6,12 +6,13 @@
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
 
-#include <PCANBasic.h>   // provide PCAN-Basic constants and types
-#include <stdint.h>      // provide uintX_t
-#include <stdio.h>       // provide printf
+#include <PCANBasic.h>     // provide PCAN-Basic constants and types
+#include <stdint.h>        // provide uintX_t
+#include <stdio.h>         // provide printf
 
+#include "common_helper.h" // provide lookupString
 #include "pcan_helper.h"
-#include "pcan_event.h"  // provide threadParameters_t
+#include "pcan_event.h"    // provide threadParameters_t
 
 
 // ----------------------------------- // -----------------------------------
@@ -147,27 +148,12 @@ const char pcanParameterUnknown[] = "Parameter unknown";
 
 const char *pcanStatusLookup(TPCANStatus status)
 {
-    int i;
     const char *statusString = 0;
 
-    for (i = 0; pcanStatuses[i].string; i++)
-    {
-	if (pcanStatuses[i].value == status)
-	{
-	    statusString = pcanStatuses[i].string;
-	    break;
-	}
-	else
-	{
-	    statusString = pcanStatusUnknown;
-	}
-	// If no match, set to default but continue iterating through statuses
-    }
-
-    // If status does not correspond to any known PCAN status,
-    // default string will be returned
+    statusString = lookupString(pcanStatuses, pcanStatusUnknown, status);
 
     return statusString;
+
 }
 
 
@@ -249,28 +235,12 @@ void pcanDumpBuffer(BYTE *buffer, size_t bufferLength)
 
 
 
-const char *pcanMsgtypeLookup(TPCANMessageType type)
+const char *pcanMsgtypeLookup(TPCANMessageType msgtype)
 {
-    int i;
     const char *msgtypeString = 0;
 
-    for (i = 0; pcanMsgtypes[i].string; i++)
-    {
-	if (pcanMsgtypes[i].value == type)
-	{
-	    msgtypeString = pcanMsgtypes[i].string;
-	    break;
-	}
-	else
-	{
-	    msgtypeString = pcanMsgtypeUnknown;
-	}
-	// If no match, set to default but continue iterating through types
-    }
-
-    // If status does not correspond to any known PCAN status,
-    // default string will be returned
-
+    msgtypeString = lookupString(pcanMsgtypes, pcanMsgtypeUnknown, msgtype);
+    
     return msgtypeString;
 }
 
@@ -306,25 +276,9 @@ void pcanDumpTimestampFD(TPCANTimestampFD timestamp)
 
 const char *pcanParameterLookup(TPCANParameter parameter)
 {
-    int i;
     const char *parameterString;
 
-    for (i = 0; pcanParameters[i].string; i++)
-    {
-	if (pcanParameters[i].value == parameter)
-	{
-	    parameterString = pcanParameters[i].string;
-	    break;
-	}
-	else
-	{
-	    parameterString = pcanParameterUnknown;
-	}
-	// If no match, set to default but continue iterating through statuses
-    }
-
-    // If parameter does not correspond to any known PCAN parameter,
-    // default string wil be returned
+    parameterString = lookupString(pcanParameters, pcanParameterUnknown, parameter);
 
     return parameterString;
 }
