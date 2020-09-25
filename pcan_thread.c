@@ -10,8 +10,8 @@ DWORD WINAPI pcan_thread_proc(LPVOID lpParam)
     int ret = 0;
 
     /* Copy parameters passed from the main thread */
-    thread_params_t thread_params = { 0 };
-    memcpy(&thread_params, (thread_params_t*)lpParam, sizeof(thread_params));
+    threadParameters_t thread_params = { 0 };
+    memcpy(&thread_params, (threadParameters_t*)lpParam, sizeof(thread_params));
 
     /* Open handles for events */
     HANDLE pcan_read_event = INVALID_HANDLE_VALUE;
@@ -82,7 +82,7 @@ DWORD WINAPI pcan_thread_proc(LPVOID lpParam)
 	} else { /* ret == (WAIT_OBJECT_0 | event_index) and WAIT_OBJECT_0 = 0 */
 	    switch (ret) {
 	    case 0: /* TODO: Use constants here */
-		(thread_params.callback)(thread_params.can_channel);
+		(thread_params.callback)(thread_params.canChannel);
 		break;
 	    case 1:
 		printf("pcan_thread_proc: Exiting thread\n");

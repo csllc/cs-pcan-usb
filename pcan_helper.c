@@ -1,90 +1,193 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
+/* PCAN-Basic helper functions
 
+   Collection of functions that print TPCAN structures to stdout, look up 
+   string representations of constants, and decode DLC values.
+
+   Copyright (c) 2020 Control Solutions LLC. All rights reserved.
+*/
+
+#include <PCANBasic.h> // provide PCAN-Basic constants and types
+#include <stdint.h> // provide uintX_t
+#include <stdio.h> // provide printf
 
 #include "pcan_helper.h"
-#include "PCANBasic.h"
+#include "pcan_thread.h" // provide threadParameters_t
+
+
+// ----------------------------------- // -----------------------------------
+// Definitions
 
 
 
 
-struct {
-    int status;
-    char* string;
-} statuses[] = {
-    { PCAN_ERROR_OK, "PCAN_ERROR_OK" },
-    { PCAN_ERROR_XMTFULL, "PCAN_ERROR_XMTFULL" },
-    { PCAN_ERROR_OVERRUN, "PCAN_ERROR_OVERRUN" },
-    { PCAN_ERROR_BUSLIGHT, "PCAN_ERROR_BUSLIGHT" },
-    { PCAN_ERROR_BUSHEAVY, "PCAN_ERROR_BUSHEAVY" },
-    { PCAN_ERROR_BUSWARNING, "PCAN_ERROR_BUSWARNING" },
-    { PCAN_ERROR_BUSPASSIVE, "PCAN_ERROR_BUSPASSIVE" },
-    { PCAN_ERROR_BUSOFF, "PCAN_ERROR_BUSOFF" },
-    { PCAN_ERROR_ANYBUSERR, "PCAN_ERROR_ANYBUSERR" },
-    { PCAN_ERROR_QRCVEMPTY, "PCAN_ERROR_QRCVEMPTY" },
-    { PCAN_ERROR_QOVERRUN, "PCAN_ERROR_QOVERRUN" },
-    { PCAN_ERROR_QXMTFULL, "PCAN_ERROR_QXMTFULL" },
-    { PCAN_ERROR_REGTEST, "PCAN_ERROR_REGTEST" },
-    { PCAN_ERROR_NODRIVER, "PCAN_ERROR_NODRIVER" },
-    { PCAN_ERROR_HWINUSE, "PCAN_ERROR_HWINUSE" },
-    { PCAN_ERROR_NETINUSE, "PCAN_ERROR_NETINUSE" },
-    { PCAN_ERROR_ILLHW, "PCAN_ERROR_ILLHW" },
-    { PCAN_ERROR_ILLNET, "PCAN_ERROR_ILLNET" },
-    { PCAN_ERROR_ILLCLIENT, "PCAN_ERROR_ILLCLIENT" },
-    { PCAN_ERROR_ILLHANDLE, "PCAN_ERROR_ILLHANDLE" },
-    { PCAN_ERROR_RESOURCE, "PCAN_ERROR_RESOURCE" },
+// ----------------------------------- // -----------------------------------
+// Global variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local variables
+
+
+// String lookup table for PCAN statuses
+const strLookup_t pcanStatuses[] = {
+    { PCAN_ERROR_OK,           "PCAN_ERROR_OK" },
+    { PCAN_ERROR_XMTFULL,      "PCAN_ERROR_XMTFULL" },
+    { PCAN_ERROR_OVERRUN,      "PCAN_ERROR_OVERRUN" },
+    { PCAN_ERROR_BUSLIGHT,     "PCAN_ERROR_BUSLIGHT" },
+    { PCAN_ERROR_BUSHEAVY,     "PCAN_ERROR_BUSHEAVY" },
+    { PCAN_ERROR_BUSWARNING,   "PCAN_ERROR_BUSWARNING" },
+    { PCAN_ERROR_BUSPASSIVE,   "PCAN_ERROR_BUSPASSIVE" },
+    { PCAN_ERROR_BUSOFF,       "PCAN_ERROR_BUSOFF" },
+    { PCAN_ERROR_ANYBUSERR,    "PCAN_ERROR_ANYBUSERR" },
+    { PCAN_ERROR_QRCVEMPTY,    "PCAN_ERROR_QRCVEMPTY" },
+    { PCAN_ERROR_QOVERRUN,     "PCAN_ERROR_QOVERRUN" },
+    { PCAN_ERROR_QXMTFULL,     "PCAN_ERROR_QXMTFULL" },
+    { PCAN_ERROR_REGTEST,      "PCAN_ERROR_REGTEST" },
+    { PCAN_ERROR_NODRIVER,     "PCAN_ERROR_NODRIVER" },
+    { PCAN_ERROR_HWINUSE,      "PCAN_ERROR_HWINUSE" },
+    { PCAN_ERROR_NETINUSE,     "PCAN_ERROR_NETINUSE" },
+    { PCAN_ERROR_ILLHW,        "PCAN_ERROR_ILLHW" },
+    { PCAN_ERROR_ILLNET,       "PCAN_ERROR_ILLNET" },
+    { PCAN_ERROR_ILLCLIENT,    "PCAN_ERROR_ILLCLIENT" },
+    { PCAN_ERROR_ILLHANDLE,    "PCAN_ERROR_ILLHANDLE" },
+    { PCAN_ERROR_RESOURCE,     "PCAN_ERROR_RESOURCE" },
     { PCAN_ERROR_ILLPARAMTYPE, "PCAN_ERROR_ILLPARAMTYPE" },
-    { PCAN_ERROR_ILLPARAMVAL, "PCAN_ERROR_ILLPARAMVAL" },
-    { PCAN_ERROR_UNKNOWN, "PCAN_ERROR_UNKNOWN" },
-    { PCAN_ERROR_ILLDATA, "PCAN_ERROR_ILLDATA" },
-    { PCAN_ERROR_ILLMODE, "PCAN_ERROR_ILLMODE" },
-    { PCAN_ERROR_CAUTION, "PCAN_ERROR_CAUTION" },
-    { PCAN_ERROR_INITIALIZE, "PCAN_ERROR_INITIALIZE" },
+    { PCAN_ERROR_ILLPARAMVAL,  "PCAN_ERROR_ILLPARAMVAL" },
+    { PCAN_ERROR_UNKNOWN,      "PCAN_ERROR_UNKNOWN" },
+    { PCAN_ERROR_ILLDATA,      "PCAN_ERROR_ILLDATA" },
+    { PCAN_ERROR_ILLMODE,      "PCAN_ERROR_ILLMODE" },
+    { PCAN_ERROR_CAUTION,      "PCAN_ERROR_CAUTION" },
+    { PCAN_ERROR_INITIALIZE,   "PCAN_ERROR_INITIALIZE" },
     { PCAN_ERROR_ILLOPERATION, "PCAN_ERROR_ILLOPERATION" },
+    { 0, 0 }
 };
 
 
+// Default string for unknown statuses
+const char pcanStatusUnknown[] = "Status unknown";
 
 
-char *pcan_status_lookup(TPCANStatus status)
+// String lookup table for message types
+const strLookup_t pcanMsgtypes [] = {
+    { PCAN_MESSAGE_STANDARD, "PCAN_MESSAGE_STANDARD" },
+    { PCAN_MESSAGE_RTR,      "PCAN_MESSAGE_RTR" },
+    { PCAN_MESSAGE_EXTENDED, "PCAN_MESSAGE_EXTENDED" },
+    { PCAN_MESSAGE_FD,       "PCAN_MESSAGE_FD" },
+    { PCAN_MESSAGE_BRS,      "PCAN_MESSAGE_BRS" },
+    { PCAN_MESSAGE_ESI,      "PCAN_MESSAGE_ESI" },
+    { PCAN_MESSAGE_ERRFRAME, "PCAN_MESSAGE_ERRFRAME" },
+    { PCAN_MESSAGE_STATUS,   "PCAN_MESSAGE_STATUS" },
+    { 0, 0 }
+};
+
+
+// Default string for unknown message types
+const char pcanMsgtypeUnknown[] = "Message type unknown";
+
+
+// String lookup table for parameters
+const strLookup_t pcanParameters [] = {
+    { PCAN_DEVICE_ID,                "PCAN_DEVICE_ID" },
+    { PCAN_5VOLTS_POWER,             "PCAN_5VOLTS_POWER" },
+    { PCAN_RECEIVE_EVENT,            "PCAN_RECEIVE_EVENT" },
+    { PCAN_MESSAGE_FILTER,           "PCAN_MESSAGE_FILTER" },
+    { PCAN_API_VERSION,              "PCAN_API_VERSION" },
+    { PCAN_CHANNEL_VERSION,          "PCAN_CHANNEL_VERSION" },
+    { PCAN_BUSOFF_AUTORESET,         "PCAN_BUSOFF_AUTORESET" },
+    { PCAN_LISTEN_ONLY,              "PCAN_LISTEN_ONLY" },
+    { PCAN_LOG_LOCATION,             "PCAN_LOG_LOCATION" },
+    { PCAN_LOG_STATUS,               "PCAN_LOG_STATUS" },
+    { PCAN_LOG_CONFIGURE,            "PCAN_LOG_CONFIGURE" },
+    { PCAN_LOG_TEXT,                 "PCAN_LOG_TEXT" },
+    { PCAN_CHANNEL_CONDITION,        "PCAN_CHANNEL_CONDITION" },
+    { PCAN_HARDWARE_NAME,            "PCAN_HARDWARE_NAME" },
+    { PCAN_RECEIVE_STATUS,           "PCAN_RECEIVE_STATUS" },
+    { PCAN_CONTROLLER_NUMBER,        "PCAN_CONTROLLER_NUMBER" },
+    { PCAN_TRACE_LOCATION,           "PCAN_TRACE_LOCATION" },
+    { PCAN_TRACE_STATUS,             "PCAN_TRACE_STATUS" },
+    { PCAN_TRACE_SIZE,               "PCAN_TRACE_SIZE" },
+    { PCAN_TRACE_CONFIGURE,          "PCAN_TRACE_CONFIGURE" },
+    { PCAN_CHANNEL_IDENTIFYING,      "PCAN_CHANNEL_IDENTIFYING" },
+    { PCAN_CHANNEL_FEATURES,         "PCAN_CHANNEL_FEATURES" },
+    { PCAN_BITRATE_ADAPTING,         "PCAN_BITRATE_ADAPTING" },
+    { PCAN_BITRATE_INFO,             "PCAN_BITRATE_INFO" },
+    { PCAN_BITRATE_INFO_FD,          "PCAN_BITRATE_INFO_FD" },
+    { PCAN_BUSSPEED_NOMINAL,         "PCAN_BUSSPEED_NOMINAL" },
+    { PCAN_BUSSPEED_DATA,            "PCAN_BUSSPEED_DATA" },
+    { PCAN_IP_ADDRESS,               "PCAN_IP_ADDRESS" },
+    { PCAN_LAN_SERVICE_STATUS,       "PCAN_LAN_SERVICE_STATUS" },
+    { PCAN_ALLOW_STATUS_FRAMES,      "PCAN_ALLOW_STATUS_FRAMES" },
+    { PCAN_ALLOW_RTR_FRAMES,         "PCAN_ALLOW_RTR_FRAMES" },
+    { PCAN_ALLOW_ERROR_FRAMES,       "PCAN_ALLOW_ERROR_FRAMES" },
+    { PCAN_INTERFRAME_DELAY,         "PCAN_INTERFRAME_DELAY" },
+    { PCAN_ACCEPTANCE_FILTER_11BIT,  "PCAN_ACCEPTANCE_FILTER_11BIT" },
+    { PCAN_ACCEPTANCE_FILTER_29BIT,  "PCAN_ACCEPTANCE_FILTER_29BIT" },
+    { PCAN_IO_DIGITAL_CONFIGURATION, "PCAN_IO_DIGITAL_CONFIGURATION" },
+    { PCAN_IO_DIGITAL_VALUE,         "PCAN_IO_DIGITAL_VALUE" },
+    { PCAN_IO_DIGITAL_SET,           "PCAN_IO_DIGITAL_SET" },
+    { PCAN_IO_DIGITAL_CLEAR,         "PCAN_IO_DIGITAL_CLEAR" },
+    { PCAN_IO_ANALOG_VALUE,          "PCAN_IO_ANALOG_VALUE" },
+    { PCAN_FIRMWARE_VERSION,         "PCAN_FIRMWARE_VERSION" },
+    { PCAN_ATTACHED_CHANNELS_COUNT,  "PCAN_ATTACHED_CHANNELS_COUNT" },
+    { PCAN_ATTACHED_CHANNELS,        "PCAN_ATTACHED_CHANNELS" },
+    { 0, 0 }
+};
+
+
+// Default string for unknown parameters
+const char pcanParameterUnknown[] = "Parameter unknown";
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Public functions
+
+const char *pcanStatusLookup(TPCANStatus status)
 {
     int i;
+    const char *statusString = 0;
 
-    for (i = 0; statuses[i].string; i++) {
-	if (statuses[i].status == status) {
-	    return statuses[i].string;
+    for (i = 0; pcanStatuses[i].string; i++)
+    {
+	if (pcanStatuses[i].value == status)
+	{
+	    statusString = pcanStatuses[i].string;
+	    break;
 	}
+	else
+	{
+	    statusString = pcanStatusUnknown;
+	}
+	// If no match, set to default but continue iterating through statuses
     }
 
-    return "status unknown";
+    // If status does not correspond to any known PCAN status,
+    // default string will be returned
+
+    return statusString;
 }
 
 
 
 
-void pcan_dump_msg(TPCANMsg *msg)
+void pcanDumpMsg(TPCANMsg *msg)
 {
-    int i;
-
     printf("msg { \n"
 	     "  ID = 0x%02X\n"
 	     "  MSGTYPE = 0x%02X (%s)\n"
 	     "  LEN = 0x%02X\n"
-	     "  DATA = {",
+	     "  DATA = ",
 	   msg->ID,
 	   msg->MSGTYPE,
-	   pcan_msgtype_lookup(msg->MSGTYPE),
+	   pcanMsgtypeLookup(msg->MSGTYPE),
 	   msg->LEN);
 
-    for (i=0; i < (msg->LEN); i++) {
-	printf("0x%02X", msg->DATA[i]);
-	if (i != ((msg->LEN) - 1)) {
-	    printf(", ");
-	}
-    }
-
-    printf("}\n"
+    pcanDumpBuffer(msg->DATA, msg->LEN);
+    
+    printf("\n"
 	   "}\n");
 
     return;
@@ -93,49 +196,49 @@ void pcan_dump_msg(TPCANMsg *msg)
 
 
 
-void pcan_dump_msg_fd(TPCANMsgFD *msg)
+void pcanDumpMsgFD(TPCANMsgFD *msg)
 {
-    int i;
-    int msg_len;
+    int msgLength;
 
-    msg_len = pcan_dlc_decode(msg->DLC);
+    msgLength = pcanDLCDecode(msg->DLC);
 
     printf("msg_fd {\n"
 	   "  ID = 0x%02X\n"
 	   "  MSGTYPE = 0x%02X (%s)\n"
 	   "  DLC = 0x%02X (0x%02X bytes)\n"
-	   "  DATA = {",
+	   "  DATA = ",
 	   msg->ID,
 	   msg->MSGTYPE,
-	   pcan_msgtype_lookup(msg->MSGTYPE),
+	   pcanMsgtypeLookup(msg->MSGTYPE),
 	   msg->DLC,
-	   msg_len);
+	   msgLength);
 
-    for (i=0; i < msg_len; i++) {
-	printf("0x%02X", msg->DATA[i]);
-	if (i != (msg_len - 1)) {
-	    printf(", ");
-	}
-    }
+    pcanDumpBuffer(msg->DATA, msgLength);
 
-    printf("}\n"
+    printf("\n"
 	   "}\n");
 
     return;
 }
 
 
-void pcan_dump_buffer(BYTE *buffer, size_t buffer_len)
+
+
+void pcanDumpBuffer(BYTE *buffer, size_t bufferLength)
 {
     int i;
 
     printf("{");
 
-    for (i = 0; i < buffer_len; i++) {
+    for (i = 0; i < bufferLength; i++)
+    {
 	printf("0x%02X", buffer[i]);
-	if (i != (buffer_len - 1)) {
+	if (i != (bufferLength - 1))
+	{
 	    printf(", ");
 	}
+	// Print comma following data byte only if not second-to-last
+	// byte in byte
     }
 
     printf("}");
@@ -146,41 +249,35 @@ void pcan_dump_buffer(BYTE *buffer, size_t buffer_len)
 
 
 
-struct {
-    int type;
-    char* string;
-} types [] = {
-    { PCAN_MESSAGE_STANDARD, "PCAN_MESSAGE_STANDARD" },
-    { PCAN_MESSAGE_RTR, "PCAN_MESSAGE_RTR" },
-    { PCAN_MESSAGE_EXTENDED, "PCAN_MESSAGE_EXTENDED" },
-    { PCAN_MESSAGE_FD, "PCAN_MESSAGE_FD" },
-    { PCAN_MESSAGE_BRS, "PCAN_MESSAGE_BRS" },
-    { PCAN_MESSAGE_ESI, "PCAN_MESSAGE_ESI" },
-    { PCAN_MESSAGE_ERRFRAME, "PCAN_MESSAGE_ERRFRAME" },
-    { PCAN_MESSAGE_STATUS, "PCAN_MESSAGE_STATUS" },
-    { 0, 0 }
-};
-
-
-
-
-char *pcan_msgtype_lookup(TPCANMessageType type)
+const char *pcanMsgtypeLookup(TPCANMessageType type)
 {
     int i;
+    const char *msgtypeString = 0;
 
-    for (i = 0; types[i].string; i++) {
-	if (types[i].type == type) {
-	    return types[i].string;
+    for (i = 0; pcanMsgtypes[i].string; i++)
+    {
+	if (pcanMsgtypes[i].value == type)
+	{
+	    msgtypeString = pcanMsgtypes[i].string;
+	    break;
 	}
+	else
+	{
+	    msgtypeString = pcanMsgtypeUnknown;
+	}
+	// If no match, set to default but continue iterating through types
     }
 
-    return "msgtype unknown";
+    // If status does not correspond to any known PCAN status,
+    // default string will be returned
+
+    return msgtypeString;
 }
 
 
 
 
-void pcan_dump_timestamp(TPCANTimestamp *timestamp)
+void pcanDumpTimestamp(TPCANTimestamp *timestamp)
 {
     printf("timestamp {\n"
 	   "  millis = %i\n"
@@ -196,7 +293,8 @@ void pcan_dump_timestamp(TPCANTimestamp *timestamp)
 
 
 
-void pcan_dump_timestamp_fd(TPCANTimestampFD timestamp)
+
+void pcanDumpTimestampFD(TPCANTimestampFD timestamp)
 {
     printf("timestampFD { %lli }\n", timestamp);
 
@@ -205,83 +303,43 @@ void pcan_dump_timestamp_fd(TPCANTimestampFD timestamp)
 
 
 
-struct {
-    int parameter;
-    char* string;
-} parameters [] = {
-    { PCAN_DEVICE_ID, "PCAN_DEVICE_ID" },
-    { PCAN_5VOLTS_POWER, "PCAN_5VOLTS_POWER" },
-    { PCAN_RECEIVE_EVENT, "PCAN_RECEIVE_EVENT" },
-    { PCAN_MESSAGE_FILTER, "PCAN_MESSAGE_FILTER" },
-    { PCAN_API_VERSION, "PCAN_API_VERSION" },
-    { PCAN_CHANNEL_VERSION, "PCAN_CHANNEL_VERSION" },
-    { PCAN_BUSOFF_AUTORESET, "PCAN_BUSOFF_AUTORESET" },
-    { PCAN_LISTEN_ONLY, "PCAN_LISTEN_ONLY" },
-    { PCAN_LOG_LOCATION, "PCAN_LOG_LOCATION" },
-    { PCAN_LOG_STATUS, "PCAN_LOG_STATUS" },
-    { PCAN_LOG_CONFIGURE, "PCAN_LOG_CONFIGURE" },
-    { PCAN_LOG_TEXT, "PCAN_LOG_TEXT" },
-    { PCAN_CHANNEL_CONDITION, "PCAN_CHANNEL_CONDITION" },
-    { PCAN_HARDWARE_NAME, "PCAN_HARDWARE_NAME" },
-    { PCAN_RECEIVE_STATUS, "PCAN_RECEIVE_STATUS" },
-    { PCAN_CONTROLLER_NUMBER, "PCAN_CONTROLLER_NUMBER" },
-    { PCAN_TRACE_LOCATION, "PCAN_TRACE_LOCATION" },
-    { PCAN_TRACE_STATUS, "PCAN_TRACE_STATUS" },
-    { PCAN_TRACE_SIZE, "PCAN_TRACE_SIZE" },
-    { PCAN_TRACE_CONFIGURE, "PCAN_TRACE_CONFIGURE" },
-    { PCAN_CHANNEL_IDENTIFYING, "PCAN_CHANNEL_IDENTIFYING" },
-    { PCAN_CHANNEL_FEATURES, "PCAN_CHANNEL_FEATURES" },
-    { PCAN_BITRATE_ADAPTING, "PCAN_BITRATE_ADAPTING" },
-    { PCAN_BITRATE_INFO, "PCAN_BITRATE_INFO" },
-    { PCAN_BITRATE_INFO_FD, "PCAN_BITRATE_INFO_FD" },
-    { PCAN_BUSSPEED_NOMINAL, "PCAN_BUSSPEED_NOMINAL" },
-    { PCAN_BUSSPEED_DATA, "PCAN_BUSSPEED_DATA" },
-    { PCAN_IP_ADDRESS, "PCAN_IP_ADDRESS" },
-    { PCAN_LAN_SERVICE_STATUS, "PCAN_LAN_SERVICE_STATUS" },
-    { PCAN_ALLOW_STATUS_FRAMES, "PCAN_ALLOW_STATUS_FRAMES" },
-    { PCAN_ALLOW_RTR_FRAMES, "PCAN_ALLOW_RTR_FRAMES" },
-    { PCAN_ALLOW_ERROR_FRAMES, "PCAN_ALLOW_ERROR_FRAMES" },
-    { PCAN_INTERFRAME_DELAY, "PCAN_INTERFRAME_DELAY" },
-    { PCAN_ACCEPTANCE_FILTER_11BIT, "PCAN_ACCEPTANCE_FILTER_11BIT" },
-    { PCAN_ACCEPTANCE_FILTER_29BIT, "PCAN_ACCEPTANCE_FILTER_29BIT" },
-    { PCAN_IO_DIGITAL_CONFIGURATION, "PCAN_IO_DIGITAL_CONFIGURATION" },
-    { PCAN_IO_DIGITAL_VALUE, "PCAN_IO_DIGITAL_VALUE" },
-    { PCAN_IO_DIGITAL_SET, "PCAN_IO_DIGITAL_SET" },
-    { PCAN_IO_DIGITAL_CLEAR, "PCAN_IO_DIGITAL_CLEAR" },
-    { PCAN_IO_ANALOG_VALUE, "PCAN_IO_ANALOG_VALUE" },
-    { PCAN_FIRMWARE_VERSION, "PCAN_FIRMWARE_VERSION" },
-    { PCAN_ATTACHED_CHANNELS_COUNT, "PCAN_ATTACHED_CHANNELS_COUNT" },
-    { PCAN_ATTACHED_CHANNELS, "PCAN_ATTACHED_CHANNELS" },
-    { 0, 0 }
-};
 
-
-
-
-char *pcan_parameter_lookup(TPCANParameter parameter)
+const char *pcanParameterLookup(TPCANParameter parameter)
 {
     int i;
+    const char *parameterString;
 
-    for (i = 0; parameters[i].string; i++) {
-	if (parameters[i].parameter == parameter) {
-	    return parameters[i].string;
+    for (i = 0; pcanParameters[i].string; i++)
+    {
+	if (pcanParameters[i].value == parameter)
+	{
+	    parameterString = pcanParameters[i].string;
+	    break;
 	}
+	else
+	{
+	    parameterString = pcanParameterUnknown;
+	}
+	// If no match, set to default but continue iterating through statuses
     }
 
-    return "parameter unknown";
+    // If parameter does not correspond to any known PCAN parameter,
+    // default string wil be returned
+
+    return parameterString;
 }
 
     
 
 
-void pcan_dump_thread_params(thread_params_t *thread_params)
+void pcanDumpThreadParameters(threadParameters_t *threadParameters)
 {
-    printf("thread_params {\n"
-	   "  can_channel = 0x%02X\n"
+    printf("threadParameters {\n"
+	   "  canChannel = 0x%02X\n"
 	   "  callback = %p\n"
 	   "}\n",
-	   thread_params->can_channel,
-	   thread_params->callback);
+	   threadParameters->canChannel,
+	   threadParameters->callback);
 
     return;
 }
@@ -289,7 +347,7 @@ void pcan_dump_thread_params(thread_params_t *thread_params)
 
 
 
-uint8_t pcan_dlc_decode(uint8_t dlc)
+uint8_t pcanDLCDecode(uint8_t dlc)
 {
     int len;
 
@@ -323,3 +381,4 @@ uint8_t pcan_dlc_decode(uint8_t dlc)
 
     return len;
 }
+

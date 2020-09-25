@@ -82,7 +82,7 @@ int pcan_EnableEvent(TPCANHandle pcan_Channel, void *callback)
     }
 
     /* Pack paramters into struct to be passed to worker thread */
-    thread_params_t pcan_thread_params = {
+    threadParameters_t pcan_thread_params = {
 	pcan_Channel,
 	callback
     };
@@ -131,7 +131,7 @@ int pcan_EnableEvent(TPCANHandle pcan_Channel, void *callback)
     
     if (pcan_result != PCAN_ERROR_OK) {
 	printf("pcan_EnableEvent: Error at CAN_SetValue: 0x%02X (%s)\n",
-	       pcan_result, pcan_status_lookup(pcan_result));
+	       pcan_result, pcanStatusLookup(pcan_result));
 	return 1;
     }
 

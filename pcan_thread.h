@@ -6,10 +6,10 @@
 #define EVENT_INDEX_READ (0)
 #define EVENT_INDEX_THREAD (1)
 
-typedef struct thread_params_s {
-    int can_channel;
+typedef struct threadParameters_s {
+    int canChannel;
     void (*callback) (int);
-} thread_params_t;
+} threadParameters_t;
     
 DWORD WINAPI pcan_thread_proc(LPVOID lpParam);
 //void __stdcall pcan_thread_proc(LPVOID lpParam);

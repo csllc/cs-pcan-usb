@@ -1,20 +1,96 @@
+/* PCAN-Basic helper functions
+
+   Collection of functions that print TPCAN structures to stdout, look up 
+   string representations of constants, and decode DLC values.
+
+   Copyright (c) 2020 Control Solutions LLC. All rights reserved.
+*/
+
 #ifndef _HELPER_PCAN_H_
 #define _HELPER_PCAN_H_
 
-#include <stdint.h>
-#include "PCANBasic.h"
-#include "pcan_thread.h"
+#include <PCANBasic.h> // provide PCAN-Basic constants and types
+#include <stdint.h> // provide uintX_t
 
-/* PCAN helpers */
-char *pcan_status_lookup(TPCANStatus status);
-void pcan_dump_msg(TPCANMsg *msg);
-void pcan_dump_msg_fd(TPCANMsgFD *msg);
-void pcan_dump_buffer(BYTE *buffer, size_t buffer_len);
-char *pcan_msgtype_lookup(TPCANMessageType type);
-void pcan_dump_timestamp(TPCANTimestamp *timestamp);
-void pcan_dump_timestamp_fd(TPCANTimestampFD timestamp);
-char *pcan_parameter_lookup(TPCANParameter parameter);
-void pcan_dump_thread_params(thread_params_t *thread_params);
-uint8_t pcan_dlc_decode(uint8_t dlc);
 
-#endif /* _HELPER_PCAN_H_ */
+#include "pcan_thread.h" // provide threadParameters_t
+
+
+// ----------------------------------- // -----------------------------------
+// Definitions
+
+// Integer constant + string pair for lookup tables
+typedef struct
+{
+    const int value;
+    const char* string;
+} strLookup_t;
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Global variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local functions
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Public functions
+
+// Return pointer to string representation of a PCAN status code, given an
+// status code defined in PCANBasic.h
+const char *pcanStatusLookup(TPCANStatus status);
+
+// Print the contents of a TPCANMsg structure to stdout in a human-readable
+// format for debugging purposes
+void pcanDumpMsg(TPCANMsg *msg);
+
+// Print the contents of a TPCANMsgFD structure to stdout in a human-readable
+// format for debugging purposes
+void pcanDumpMsgFD(TPCANMsgFD *msg);
+
+// Print the contents of a buffer (uint8_t array) to stdout in a human-readable
+// format for debugging purposes
+void pcanDumpBuffer(BYTE *buffer, size_t bufferLength);
+
+// Return pointer to string representation of a PCAN message type code, given
+// a message type code defined in PCANBasic.h
+const char *pcanMsgtypeLookup(TPCANMessageType type);
+
+// Print the contents of a TPCANTimestamp structure to stdout in a human-readable
+// format for debuging purposes
+void pcanDumpTimestamp(TPCANTimestamp *timestamp);
+
+// Print a TPCANTimestampFD (uint64_t) to stdout in a human-readable format
+// for debugging purposes
+void pcanDumpTimestampFD(TPCANTimestampFD timestamp);
+
+// Return pointer to string representation of a PCAN message parameter code,
+// given a parameter code defined in PCANBasic.h
+const char *pcanParameterLookup(TPCANParameter parameter);
+
+// Print the contents of a threadParameters_t structure to stdout in a
+// human-readable format for debugging purposes
+void pcanDumpThreadParams(threadParameters_t *threadParameters);
+
+// Return message size, in bytes, given a DLC code
+uint8_t pcanDLCDecode(uint8_t dlc);
+
+
+
+
+#endif // _HELPER_PCAN_H_
+

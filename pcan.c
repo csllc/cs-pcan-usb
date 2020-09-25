@@ -53,7 +53,7 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 	   "  pcan_status = 0x%02X (%s)\n"
 	   "  pcan_Channel = 0x%02X\n"
 	   "  pcan_Btr0Btr1 = 0x%02X\n",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
 	   pcan_Btr0Btr1);
     
@@ -105,7 +105,7 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
 	   "  pcan_status = 0x%02X (%s)\n"
 	   "  pcan_Channel = 0x%02X\n"
 	   "  pcan_BitrateFD = \"%s\"\n",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
 	   pcan_BitrateFD);
 
@@ -145,7 +145,7 @@ napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info)
     TPCANStatus pcan_status;
 
     pcan_status = CAN_Uninitialize(pcan_Channel);
-    printf("pcan_CAN_Uninitialize: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    printf("pcan_CAN_Uninitialize: 0x%02X (%s)\n", pcan_status, pcanStatusLookup(pcan_status));
 
     /* Create a N-API value for the result and return it */
     napi_value result;
@@ -183,7 +183,7 @@ napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info)
     TPCANStatus pcan_status;
 
     pcan_status = CAN_Reset(pcan_Channel);
-    printf("pcan_CAN_Reset: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    printf("pcan_CAN_Reset: 0x%02X (%s)\n", pcan_status, pcanStatusLookup(pcan_status));
 
     /* Create a N-API value for the result and return it */
     napi_value result;
@@ -221,7 +221,7 @@ napi_value pcan_CAN_GetStatus(napi_env env, napi_callback_info info)
     TPCANStatus pcan_can_status;
     
     pcan_can_status = CAN_GetStatus(pcan_Channel);
-    printf("pcan_CAN_GetStatus: 0x%02X (%s)\n", pcan_can_status, pcan_status_lookup(pcan_can_status));
+    printf("pcan_CAN_GetStatus: 0x%02X (%s)\n", pcan_can_status, pcanStatusLookup(pcan_can_status));
 
     /* Create a N-API value for the status and return it */
     napi_value can_status;
@@ -285,10 +285,11 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     TPCANStatus pcan_status;
 
     pcan_status = CAN_Read(pcan_Channel, &msg, &timestamp);
-    //printf("pcan_CAN_Read: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
-
-    //pcan_dump_msg(&msg);
-    //pcan_dump_timestamp(&timestamp);
+    
+    /* Print the result to console */
+    printf("pcan_CAN_Read: 0x%02X (%s)\n", pcan_status, pcanStatusLookup(pcan_status));
+    pcanDumpMsg(&msg);
+    pcanDumpTimestamp(&timestamp);
 
     /* Copy read values into objects passed from N-API */
     /* arvg[1] - message buffer */
@@ -398,10 +399,10 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
     pcan_status = CAN_ReadFD(pcan_Channel, &msg, &timestamp);
 
     /* Dump results to console */
-    printf("pcan_CAN_ReadFD: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    printf("pcan_CAN_ReadFD: 0x%02X (%s)\n", pcan_status, pcanStatusLookup(pcan_status));
 
-    pcan_dump_msg_fd(&msg);
-    pcan_dump_timestamp_fd(timestamp);
+    pcanDumpMsgFD(&msg);
+    pcanDumpTimestampFD(timestamp);
 
     /* Copy read values into objects passed from N-API */
     /* arvg[1] - message buffer */
@@ -426,7 +427,7 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
     status = napi_set_named_property(env, argv[1], "dlc", pcan_MessageBuffer_value_dlc);
     assert(status == napi_ok);
 
-    status = napi_create_buffer_copy(env, pcan_dlc_decode(msg.DLC), (void*)&(msg.DATA), (void*)&pcan_MessageBuffer_value_data_result, &pcan_MessageBuffer_value_data);
+    status = napi_create_buffer_copy(env, pcanDLCDecode(msg.DLC), (void*)&(msg.DATA), (void*)&pcan_MessageBuffer_value_data_result, &pcan_MessageBuffer_value_data);
     assert(status == napi_ok);
     status = napi_set_named_property(env, argv[1], "data", pcan_MessageBuffer_value_data);
     assert(status == napi_ok);
@@ -524,10 +525,10 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
     TPCANStatus pcan_status;
 
     pcan_status = CAN_Write(pcan_Channel, &msg);
-    printf("pcan_CAN_Write: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    printf("pcan_CAN_Write: 0x%02X (%s)\n", pcan_status, pcanStatusLookup(pcan_status));
 
     /* Dump the results to the console */
-    pcan_dump_msg(&msg);
+    pcanDumpMsg(&msg);
 
     /* Create a N-API value for the result and return it */
     napi_value result;
@@ -603,12 +604,12 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
     status = napi_get_buffer_info(env, pcan_MessageBuffer_value_data, (void**)&msg_tmp_DATA, &msg_tmp_LEN);
     assert(status == napi_ok);
 
-    if (msg_tmp_LEN != pcan_dlc_decode(msg.DLC)) {
+    if (msg_tmp_LEN != pcanDLCDecode(msg.DLC)) {
 	napi_throw_error(env, 0, "Mismatch between dlc argument and actual data buffer length");
 	return 0;
     }
 
-    memcpy(msg.DATA, msg_tmp_DATA, pcan_dlc_decode(msg.DLC));
+    memcpy(msg.DATA, msg_tmp_DATA, pcanDLCDecode(msg.DLC));
 
     /* Write to CAN bus */
     TPCANStatus pcan_status;
@@ -616,8 +617,8 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
     pcan_status = CAN_WriteFD(pcan_Channel, &msg);
     
     /* Dump result to console */
-    printf("pcan_CAN_WriteFD: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
-    pcan_dump_msg_fd(&msg);
+    printf("pcan_CAN_WriteFD: 0x%02X (%s)\n", pcan_status, pcanStatusLookup(pcan_status));
+    pcanDumpMsgFD(&msg);
 
     /* Create a N-API value for the result and return it */
     napi_value result;
@@ -691,12 +692,12 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 	   "  pcan_Parameter = 0x%02X (%s)\n"
 	   "  pcan_BufferLength = 0x%02zX\n"
 	   "  pcan_Buffer = ",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
-	   pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
+	   pcan_Parameter, pcanParameterLookup(pcan_Parameter),
 	   pcan_BufferLength);
 
-    pcan_dump_buffer(pcan_Buffer, pcan_BufferLength);
+    pcanDumpBuffer(pcan_Buffer, pcan_BufferLength);
 
     printf("\n");
 
@@ -775,12 +776,12 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
 	   "  pcan_Parameter = 0x%02X (%s)\n"
 	   "  pcan_BufferLength = 0x%02zX\n"
 	   "  pcan_Buffer = ",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
-	   pcan_Parameter, pcan_parameter_lookup(pcan_Parameter),
+	   pcan_Parameter, pcanParameterLookup(pcan_Parameter),
 	   pcan_BufferLength);
 
-    pcan_dump_buffer(pcan_Buffer, pcan_BufferLength);
+    pcanDumpBuffer(pcan_Buffer, pcan_BufferLength);
 
     printf("\n");
 
@@ -848,7 +849,7 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
 	   "  pcan_FromID = 0x%08X\n"
 	   "  pcan_ToID = 0x%08X\n"
 	   "  pcan_Mode = 0x%02X\n",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
 	   pcan_FromID,
 	   pcan_ToID,
@@ -909,7 +910,7 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
 	   "  pcan_Error = %i\n"
 	   "  pcan_Language = %i\n"
 	   "  pcan_Buffer = \"%s\"\n",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Error,
 	   pcan_Language,
 	   pcan_Buffer);
@@ -1104,7 +1105,7 @@ napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
 	   "  pcan_AcceptanceCode = 0x%08X\n"
 	   "  pcan_AcceptanceMask = 0x%08X\n"
 	   "  pcan_AcceptanceFilter = 0x%016llX\n",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
 	   pcan_AcceptanceCode,
 	   pcan_AcceptanceMask,
@@ -1175,7 +1176,7 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 	   "  pcan_AcceptanceCode = 0x%08X\n"
 	   "  pcan_AcceptanceMask = 0x%08X\n"
 	   "  pcan_AcceptanceFilter = 0x%016llX\n",
-	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_status, pcanStatusLookup(pcan_status),
 	   pcan_Channel,
 	   pcan_AcceptanceCode,
 	   pcan_AcceptanceMask,
