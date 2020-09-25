@@ -93,6 +93,38 @@ void pcan_dump_msg(TPCANMsg *msg)
 
 
 
+void pcan_dump_msg_fd(TPCANMsgFD *msg)
+{
+    int i;
+    int msg_len;
+
+    msg_len = pcan_dlc_decode(msg->DLC);
+
+    printf("msg_fd {\n"
+	   "  ID = 0x%02X\n"
+	   "  MSGTYPE = 0x%02X (%s)\n"
+	   "  DLC = 0x%02X (0x%02X bytes)\n"
+	   "  DATA = {",
+	   msg->ID,
+	   msg->MSGTYPE,
+	   pcan_msgtype_lookup(msg->MSGTYPE),
+	   msg->DLC,
+	   msg_len);
+
+    for (i=0; i < msg_len; i++) {
+	printf("0x%02X", msg->DATA[i]);
+	if (i != (msg_len - 1)) {
+	    printf(", ");
+	}
+    }
+
+    printf("}\n"
+	   "}\n");
+
+    return;
+}
+
+
 void pcan_dump_buffer(BYTE *buffer, size_t buffer_len)
 {
     int i;
@@ -162,6 +194,14 @@ void pcan_dump_timestamp(TPCANTimestamp *timestamp)
     return;
 }
 
+
+
+void pcan_dump_timestamp_fd(TPCANTimestampFD timestamp)
+{
+    printf("timestampFD { %lli }\n", timestamp);
+
+    return;
+}
 
 
 
@@ -246,3 +286,40 @@ void pcan_dump_thread_params(thread_params_t *thread_params)
     return;
 }
 
+
+
+
+uint8_t pcan_dlc_decode(uint8_t dlc)
+{
+    int len;
+
+    if (dlc <= 8) {
+	len = dlc;
+    } else {
+	switch (dlc) {
+	case 9:
+	    len = 12;
+	    break;
+	case 10:
+	    len = 16;
+	    break;
+	case 11:
+	    len = 20;
+	    break;
+	case 12:
+	    len = 24;
+	    break;
+	case 13:
+	    len = 32;
+	    break;
+	case 14:
+	    len = 48;
+	    break;
+	case 15:
+	    len = 64;
+	    break;
+	}
+    }
+
+    return len;
+}

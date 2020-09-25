@@ -29,6 +29,58 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     if (argc != CAN_INITIALIZE_ARGC) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments."
+			      "This implemtnation of CAN_Initialize accepts Channel and "
+			      "Btr0Btr1.");
+	return 0;
+    }
+
+    /* Retreive arguments */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    int32_t pcan_Btr0Btr1;
+    status = napi_get_value_int32(env, argv[1], &pcan_Btr0Btr1);
+    assert(status == napi_ok);
+
+    /* Initialize CAN bus */
+    TPCANStatus pcan_status;
+    pcan_status = CAN_Initialize(pcan_Channel, pcan_Btr0Btr1, 0, 0, 0);
+    
+    /* Dump results to console */
+    printf("pcan_CAN_Initialize:\n"
+	   "  pcan_status = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_Btr0Btr1 = 0x%02X\n",
+	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_Channel,
+	   pcan_Btr0Btr1);
+    
+    /* Create an N-API value for the result and return it */
+    napi_value result;
+    status = napi_create_int32(env, pcan_status, &result);
+
+    return result;
+}
+
+
+
+
+napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get callback info and argments: 
+       TPCANHandle Channel (int32)
+       TPCANBitrateFD BitrateFD (string) */
+    size_t argc = CAN_INITIALIZEFD_ARGC;
+    napi_value argv[CAN_INITIALIZEFD_ARGC];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != CAN_INITIALIZEFD_ARGC) {
 	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
 	return 0;
     }
@@ -37,19 +89,26 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     int32_t pcan_Channel;
     status = napi_get_value_int32(env, argv[0], &pcan_Channel);
     assert(status == napi_ok);
-    printf("pcan_CAN_Initialize: pcan_Channel = 0x%02X\n", pcan_Channel);
 
-    int32_t pcan_Btr0Btr1;
-    status = napi_get_value_int32(env, argv[1], &pcan_Btr0Btr1);
+    char pcan_BitrateFD[256] = { 0 };
+    size_t pcan_BitrateFD_result = 0;
+    status = napi_get_value_string_utf8(env, argv[1], pcan_BitrateFD, sizeof(pcan_BitrateFD), &pcan_BitrateFD_result);
     assert(status == napi_ok);
-    printf("pcan_CAN_Initialize: pcan_Btr0Btr1 = 0x%02X\n", pcan_Btr0Btr1);
+    printf("pcan_CAN_InitializeFD: pcan_BitrateFD = \"%s\"\n", pcan_BitrateFD);
 
-    /* Initialize CAN bus */
+    /* Initialize CAN bus, with flexible data rate capabilities */
     TPCANStatus pcan_status;
-    pcan_status = CAN_Initialize(pcan_Channel, pcan_Btr0Btr1, 0, 0, 0);
-    printf("pcan_CAN_Initialize: 0x%02X (%s)\n",
-	   pcan_status, pcan_status_lookup(pcan_status));
+    pcan_status = CAN_InitializeFD(pcan_Channel, pcan_BitrateFD);
     
+    /* Dump results to console */
+    printf("pcan_CAN_InitializeFD:\n"
+	   "  pcan_status = 0x%02X (%s)\n"
+	   "  pcan_Channel = 0x%02X\n"
+	   "  pcan_BitrateFD = \"%s\"\n",
+	   pcan_status, pcan_status_lookup(pcan_status),
+	   pcan_Channel,
+	   pcan_BitrateFD);
+
     /* Create N-API value for the result and return it */
     napi_value result;
     status = napi_create_int32(env, pcan_status, &result);
@@ -231,7 +290,7 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     //pcan_dump_msg(&msg);
     //pcan_dump_timestamp(&timestamp);
 
-    /* Put read values into objects passed from N-API */
+    /* Copy read values into objects passed from N-API */
     /* arvg[1] - message buffer */
     napi_value pcan_MessageBuffer_value_id; /* uint32 */
     napi_value pcan_MessageBuffer_value_msgtype; /* uint32 */
@@ -277,6 +336,110 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     status = napi_set_named_property(env, argv[2], "micros", pcan_TimestampBuffer_value_micros);
 
     /* Create a N-API value for the result and return it */
+    napi_value result;
+    status = napi_create_int32(env, pcan_status, &result);
+
+    return result;
+}
+
+
+
+
+napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get callback info and arguments from N-API:
+       TPCANHandle Channel (int32)
+       TPCANMsgFD *MessageBuffer (uint64)
+       TPCANTimestampFD *TimestampBuffer */
+    size_t argc = 3;
+    napi_value argv[3];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 3) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - channel */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - message buffer */
+    napi_valuetype pcan_MessageBuffer_type;
+    status = napi_typeof(env, argv[1], &pcan_MessageBuffer_type);
+    assert(status == napi_ok);
+
+    if (pcan_MessageBuffer_type != napi_object) {
+	napi_throw_type_error(env, 0, "Argument 1 (MessageBufferFD) is not an object.");
+	return 0;
+    }
+
+    /* argv[2] - timestamp buffer */
+    napi_valuetype pcan_TimestampBuffer_type;
+    status = napi_typeof(env, argv[2], &pcan_TimestampBuffer_type);
+    assert(status == napi_ok);
+
+    if (pcan_TimestampBuffer_type != napi_object) {
+	napi_throw_type_error(env, 0, "Argument 2 (TimestampBufferFD) is not an object.");
+	return 0;
+    }
+
+    /* Read from CAN bus */
+    TPCANMsgFD msg = { 0 };
+    TPCANTimestampFD timestamp = 0;
+    TPCANStatus pcan_status;
+
+    pcan_status = CAN_ReadFD(pcan_Channel, &msg, &timestamp);
+
+    /* Dump results to console */
+    printf("pcan_CAN_ReadFD: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+
+    pcan_dump_msg_fd(&msg);
+    pcan_dump_timestamp_fd(timestamp);
+
+    /* Copy read values into objects passed from N-API */
+    /* arvg[1] - message buffer */
+    napi_value pcan_MessageBuffer_value_id; /* uint32 */
+    napi_value pcan_MessageBuffer_value_msgtype; /* uint32 */
+    napi_value pcan_MessageBuffer_value_dlc; /* uint32 */
+    napi_value pcan_MessageBuffer_value_data; /* buffer */
+    void* pcan_MessageBuffer_value_data_result;
+    
+    status = napi_create_uint32(env, msg.ID, &pcan_MessageBuffer_value_id);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[1], "id", pcan_MessageBuffer_value_id);
+    assert(status == napi_ok);
+    
+    status = napi_create_uint32(env, msg.MSGTYPE, &pcan_MessageBuffer_value_msgtype);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[1], "msgtype", pcan_MessageBuffer_value_msgtype);
+    assert(status == napi_ok);
+    
+    status = napi_create_uint32(env, msg.DLC, &pcan_MessageBuffer_value_dlc);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[1], "dlc", pcan_MessageBuffer_value_dlc);
+    assert(status == napi_ok);
+
+    status = napi_create_buffer_copy(env, pcan_dlc_decode(msg.DLC), (void*)&(msg.DATA), (void*)&pcan_MessageBuffer_value_data_result, &pcan_MessageBuffer_value_data);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[1], "data", pcan_MessageBuffer_value_data);
+    assert(status == napi_ok);
+
+    /* argv[2] - TimestampFD */
+    napi_value pcan_TimestampFD_value; /* uint64 */
+
+    status = napi_create_uint32(env, timestamp, &pcan_TimestampFD_value);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, argv[2], "timestamp", pcan_TimestampFD_value);
+    assert(status == napi_ok);
+
+    /* Create an N-API value for the result and return it */
     napi_value result;
     status = napi_create_int32(env, pcan_status, &result);
 
@@ -363,6 +526,7 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
     pcan_status = CAN_Write(pcan_Channel, &msg);
     printf("pcan_CAN_Write: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
 
+    /* Dump the results to the console */
     pcan_dump_msg(&msg);
 
     /* Create a N-API value for the result and return it */
@@ -371,6 +535,97 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
     
     return result;
 }
+
+
+
+
+napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+
+    /* Get calback info and arguments from N-API:
+       TPCANHandle Channel (int32)
+       TPCANMsg *MessageBuffer (uint64) */
+
+    size_t argc = 2;
+    napi_value argv[2];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != 2) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    /* Retrieve arguments */
+    /* argv[0] - channel (TPCANHandle) */
+    int32_t pcan_Channel;
+    status = napi_get_value_int32(env, argv[0], &pcan_Channel);
+    assert(status == napi_ok);
+
+    /* argv[1] - message buffer (TPCANMsg) */
+    napi_valuetype pcan_MessageBuffer_type;
+    status = napi_typeof(env, argv[1], &pcan_MessageBuffer_type);
+    assert(status == napi_ok);
+
+    if (pcan_MessageBuffer_type != napi_object) {
+	napi_throw_type_error(env, 0, "Argument 1 is not an object.");
+	return 0;
+    }
+
+    /* Copy message contents from N-API object to TPCANMsg struct */
+    TPCANMsgFD msg = { 0 };
+
+    napi_value pcan_MessageBuffer_value_id;
+    status = napi_get_named_property(env, argv[1], "id", &pcan_MessageBuffer_value_id);
+    assert(status == napi_ok);
+    status = napi_get_value_uint32(env, pcan_MessageBuffer_value_id, &(msg.ID));
+    assert(status == napi_ok);
+
+    napi_value pcan_MessageBuffer_value_msgtype;
+    status = napi_get_named_property(env, argv[1], "msgtype", &pcan_MessageBuffer_value_msgtype);
+    assert(status == napi_ok);
+    status = napi_get_value_uint32(env, pcan_MessageBuffer_value_msgtype, (uint32_t*)&(msg.MSGTYPE));
+    assert(status == napi_ok);
+
+    napi_value pcan_MessageBuffer_value_dlc;
+    status = napi_get_named_property(env, argv[1], "dlc", &pcan_MessageBuffer_value_dlc);
+    assert(status == napi_ok);
+    status = napi_get_value_uint32(env, pcan_MessageBuffer_value_dlc, (uint32_t*)&(msg.DLC));
+    assert(status == napi_ok);
+
+    napi_value pcan_MessageBuffer_value_data;
+    BYTE *msg_tmp_DATA;
+    size_t msg_tmp_LEN = 0;
+    status = napi_get_named_property(env, argv[1], "data", &pcan_MessageBuffer_value_data);
+    assert(status == napi_ok);
+    status = napi_get_buffer_info(env, pcan_MessageBuffer_value_data, (void**)&msg_tmp_DATA, &msg_tmp_LEN);
+    assert(status == napi_ok);
+
+    if (msg_tmp_LEN != pcan_dlc_decode(msg.DLC)) {
+	napi_throw_error(env, 0, "Mismatch between dlc argument and actual data buffer length");
+	return 0;
+    }
+
+    memcpy(msg.DATA, msg_tmp_DATA, pcan_dlc_decode(msg.DLC));
+
+    /* Write to CAN bus */
+    TPCANStatus pcan_status;
+
+    pcan_status = CAN_WriteFD(pcan_Channel, &msg);
+    
+    /* Dump result to console */
+    printf("pcan_CAN_WriteFD: 0x%02X (%s)\n", pcan_status, pcan_status_lookup(pcan_status));
+    pcan_dump_msg_fd(&msg);
+
+    /* Create a N-API value for the result and return it */
+    napi_value result;
+    status = napi_create_int32(env, pcan_status, &result);
+    
+    return result;
+}
+
 
 
 
@@ -938,7 +1193,7 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 
 
 
-enum { descriptors_len = 14 };
+enum { descriptors_len = 17 };
 
 napi_value Init(napi_env env, napi_value exports)
 {
@@ -951,11 +1206,14 @@ napi_value Init(napi_env env, napi_value exports)
     napi_property_descriptor descriptors[descriptors_len] = {
 	/* Vendor functions */
 	DECLARE_NAPI_METHOD("CAN_Initialize", pcan_CAN_Initialize),
+	DECLARE_NAPI_METHOD("CAN_InitializeFD", pcan_CAN_InitializeFD),
 	DECLARE_NAPI_METHOD("CAN_Uninitialize", pcan_CAN_Uninitialize),
 	DECLARE_NAPI_METHOD("CAN_Reset", pcan_CAN_Reset),
 	DECLARE_NAPI_METHOD("CAN_GetStatus", pcan_CAN_GetStatus),
 	DECLARE_NAPI_METHOD("CAN_Read", pcan_CAN_Read),
+	DECLARE_NAPI_METHOD("CAN_ReadFD", pcan_CAN_ReadFD),
 	DECLARE_NAPI_METHOD("CAN_Write", pcan_CAN_Write),
+	DECLARE_NAPI_METHOD("CAN_WriteFD", pcan_CAN_Write),
 	DECLARE_NAPI_METHOD("CAN_GetValue", pcan_CAN_GetValue),
 	DECLARE_NAPI_METHOD("CAN_SetValue", pcan_CAN_SetValue),
 	DECLARE_NAPI_METHOD("CAN_FilterMessages", pcan_CAN_FilterMessages),
