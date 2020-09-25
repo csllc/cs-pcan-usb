@@ -8,7 +8,6 @@
 
 #include "pcan.h"
 #include "pcan_helper.h"
-#include "pcan_thread.h"
 #include "pcan_event.h"
 #include "napi_helper.h"
 
@@ -986,7 +985,7 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
 
     /* Enable CAN Bus receive event */
     int pcan_status;
-    pcan_status = pcan_EnableEvent(pcan_Channel, pcan_CAN_EventCallback);
+    pcan_status = pcanEventEnable(pcan_Channel, pcan_CAN_EventCallback);
     printf("pcan_CAN_EnableEvent: 0x%02X\n", pcan_status);
 
     /* Create a N-API value for the result and return it */
@@ -1024,7 +1023,7 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
     /* Disable CAN Bus receive event */
     int pcan_status;
 
-    pcan_status = pcan_DisableEvent(pcan_Channel);    
+    pcan_status = pcanEventDisable(pcan_Channel);    
     printf("pcan_CAN_DisableEvent: 0x%02X\n", pcan_status);
 
     /* Create a N-API value for the result and return it */

@@ -1,137 +1,306 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <windows.h>
+/* PCAN-Basic event control functions and worker thread process
 
-#include "PCANBasic.h"
-#include "pcan.h"
+   Functions that enable and disable the use of an event used by the PCAN-Basic
+   library to signal that received data is available for reading. When enabled,
+   a worker thread is spawned that waits on this event and invokes a callback
+   function when its state changes to signaled, which presumably calls 
+   CAN_Read() to retrieve the newly received data.
+
+   Copyright (c) 2020 Control Solutions LLC. All rights reserved.
+*/
+
+#include <stdio.h>       // provide printf
+#include <stdbool.h>     // provide boolean values
+#include <windows.h>     // provide Win32 API constants and types
+#include <PCANBasic.h>   // provide PCAN-Basic constants and types
+
+#include "pcan.h"        // provide default callback function
 #include "pcan_event.h"
-#include "pcan_thread.h"
-#include "pcan_helper.h"
+#include "pcan_helper.h" // provide pcanStatusLookup
 
-HANDLE pcan_read_event = INVALID_HANDLE_VALUE;
-HANDLE pcan_spawn_event = INVALID_HANDLE_VALUE;
-HANDLE pcan_exit_event = INVALID_HANDLE_VALUE;
-HANDLE pcan_thread = INVALID_HANDLE_VALUE;
-DWORD pcan_thread_id = 0;
 
-int pcan_EnableEvent(TPCANHandle pcan_Channel, void *callback)
+// ----------------------------------- // -----------------------------------
+// Definitions
+
+// Names used both in CreateEvent calls in main thread and OpenEvent calls
+// in worker thread
+const char pcanEventReadName[] = "pcanEventRead";
+const char pcanEventSpawnName[] = "pcanEventSpawn";
+const char pcanEventExitName[] = "pcanEventExit";
+
+
+// ----------------------------------- // -----------------------------------
+// Global variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local variables
+
+// Handle for CAN bus read event, signaled my main thread (PCAN-Basic API) when
+// a message has been received and waited on by worker thread
+HANDLE pcanEventRead = INVALID_HANDLE_VALUE;
+
+// Handle for worker thread spawn event, signaled by worker shortly after thread
+// starts and waited on by main thread
+HANDLE pcanEventSpawn = INVALID_HANDLE_VALUE;
+
+// Handle for worker thread exit event, signaled by main thread during exit
+// routine, and waited on by worker thread
+HANDLE pcanEventExit = INVALID_HANDLE_VALUE;
+
+// Worker thread handle, populated by pcanEventEnable
+HANDLE pcanEventThread = INVALID_HANDLE_VALUE;
+
+// Worker thread ID, populated by pcanEventEnable
+DWORD pcanEventThreadID = 0;
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local functions
+
+
+DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
 {
     int ret = 0;
 
-    /* Create security attributes structure for events and worker thread */
-    SECURITY_DESCRIPTOR pcan_security_desc = { 0 };
+    // Copy parameters passed from the main thread
+    threadParameters_t threadParams = { 0 };
+    memcpy(&threadParams, (threadParameters_t*)lpParam, sizeof(threadParams));
 
-    ret = InitializeSecurityDescriptor(&pcan_security_desc,
+    // Open thread-local handles for events
+    HANDLE pcanEventRead = INVALID_HANDLE_VALUE;
+    HANDLE pcanEventSpawn = INVALID_HANDLE_VALUE;
+    HANDLE pcanEventExit = INVALID_HANDLE_VALUE;
+    
+    pcanEventRead = OpenEvent(EVENT_PERMISSIONS, // dwDesiredAccess
+			      false, // bInheritHandle
+			      pcanEventReadName);
+
+    if (pcanEventRead == 0)
+    {
+	printf("pcanEventThreadProc: Error at OpenEvent(pcanEventRead): %i\n",
+	       GetLastError());
+	return 1;
+    }
+
+    pcanEventSpawn = OpenEvent(EVENT_PERMISSIONS, // dwDesiredAccess
+			       false, // bInheritHandle
+			       pcanEventSpawnName);
+
+    if (pcanEventSpawn == 0)
+    {
+	printf("pcanEventThreadProc: Error at OpenEvent(pcanEventSpawn): %i\n",
+	       GetLastError());
+	return 1;
+    }
+
+    pcanEventExit = OpenEvent(EVENT_PERMISSIONS, // dwDesiredAccess
+			      false, // bInheritHandle
+			      pcanEventExitName);
+
+    if (pcanEventExit == 0)
+    {
+	printf("pcanEventThreadProc: Error at OpenEvent(pcanEventExit): %i\n",
+	       GetLastError());
+	return 1;
+    }
+
+    // Set spawn_event, indicating that the worker thread is running
+    ret = SetEvent(pcanEventSpawn);
+    if (ret == 0)
+    {
+	printf("pcanEventThreadProc: Error at SetEvent (0x%02X)\n", GetLastError());
+	return 1;
+    }
+    
+    // Wait for either event to be signaled
+    int threadExit = 0;
+    HANDLE events[2] = { 0 };
+    int eventIndex = 0;
+    
+    events[EVENT_INDEX_READ] = pcanEventRead;
+    events[EVENT_INDEX_EXIT] = pcanEventExit;
+
+    while (threadExit == 0) {
+	printf("pcanEventThreadProc: Waiting for read_event or thread_event...\n");
+	ret = WaitForMultipleObjects(2, // nCount
+				     events, // lpHandles
+				     false, // bWaitAll
+				     INFINITE); // dwMilliseconds
+
+	if (ret & WAIT_ABANDONED_0)
+	{
+	    eventIndex = (ret ^ WAIT_ABANDONED_0);
+	    printf("pcanEventThreadProc: WAIT_ABANDONED_0 %i\n", eventIndex);
+	}
+	else if (ret == WAIT_TIMEOUT)
+	{
+	    printf("pcanEventThreadProc: WAIT_TIMEOUT\n");
+	    return 1;
+	}
+	else if (ret == WAIT_FAILED)
+	{
+	    printf("pcanEventThreadProc: WAIT_FAILED: %i\n", GetLastError());
+	    return 1;
+	}
+	else
+	{
+	    // ret is (WAIT_OBJECT_0 | event_index) and WAIT_OBJECT_0 = 0,
+	    switch (ret)
+	    {
+	    case EVENT_INDEX_READ: // Execute callback
+		(threadParams.callback)(threadParams.canChannel);
+		break;
+	    case EVENT_INDEX_EXIT: // Cleanup and exit thread cleanly
+		printf("pcanEventThreadProc: Exiting thread\n");
+		CloseHandle(pcanEventRead);
+		CloseHandle(pcanEventSpawn);
+		CloseHandle(pcanEventExit);
+		threadExit = 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Public functions
+
+
+int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
+{
+    int ret = 0;
+
+    // Create security attributes structure for events and worker thread
+    SECURITY_DESCRIPTOR pcanSecurityDesc = { 0 };
+
+    ret = InitializeSecurityDescriptor(&pcanSecurityDesc,
 				       SECURITY_DESCRIPTOR_REVISION);
-    if (ret == 0) {
-	printf("pcan_EnableEvent: Error at InitializeSecurityDescriptor: %i\n",
+    if (ret == 0)
+    {
+	printf("pcanEventEnable: Error at InitializeSecurityDescriptor: %i\n",
 	       GetLastError());
 	return 1;
     }
     
-    ret = SetSecurityDescriptorDacl(&pcan_security_desc,
+    ret = SetSecurityDescriptorDacl(&pcanSecurityDesc,
 				    true,
 				    0,
 				    false);
-    if (ret == 0) {
-	printf("pcan_EnableEvent: Error at SetSecurityDescriptorDacl: %i\n",
+    if (ret == 0)
+    {
+	printf("pcanEventEnable: Error at SetSecurityDescriptorDacl: %i\n",
 	       GetLastError());
 	return 1;
     }
 
-    SECURITY_ATTRIBUTES pcan_security_attr = { 0 };
-    pcan_security_attr.nLength = sizeof(pcan_security_attr);
-    pcan_security_attr.lpSecurityDescriptor = &pcan_security_desc;
-    pcan_security_attr.bInheritHandle = true;
+    SECURITY_ATTRIBUTES pcanSecurityAttr = { 0 };
+    pcanSecurityAttr.nLength = sizeof(pcanSecurityAttr);
+    pcanSecurityAttr.lpSecurityDescriptor = &pcanSecurityDesc;
+    pcanSecurityAttr.bInheritHandle = true;
 
-    /* Create event object that worker thread will use to communicate
-       CAN read events with main thread */
-    pcan_read_event = CreateEvent(&pcan_security_attr, /* lpEventAttributes */
-				  false, /* bManualReset */
-				  false, /* bInitialState */
-				  "pcan_read_event");
+    // Create event object that worker thread will use to communicate
+    // CAN read events with main thread
+    pcanEventRead = CreateEvent(&pcanSecurityAttr, // lpEventAttributes
+				false, // bManualReset
+				false, // bInitialState
+				"pcanEventRead");
 
-    if (pcan_read_event == 0) {
-	printf("pcan_EnableEvent: Error at CreateEvent (pcan_read_event) (0x%02X)",
+    if (pcanEventRead == 0)
+    {
+	printf("pcanEventEnable: Error at CreateEvent (pcanEventRead) (0x%02X)",
 	       GetLastError());
 	return 1;
     }
 
-    /* Create event object that worker thread will use to indicate it has started */
-    pcan_spawn_event = CreateEvent(&pcan_security_attr, /* lpEventAttributes */
-				   false, /* bManualReset */
-				   false, /* bInitialState */
-				   "pcan_spawn_event");
+    // Create event object that worker thread will use to indicate it has started
+    pcanEventSpawn = CreateEvent(&pcanSecurityAttr, // lpEventAttributes
+				 false, // bManualReset
+				 false, // bInitialState
+				 "pcanEventSpawn");
 
-    if (pcan_spawn_event == 0) {
-	printf("pcan_EnableEvent: Error at CreateEvent (pcan_spawn_event) (0x%02X)",
+    if (pcanEventSpawn == 0)
+    {
+	printf("pcanEventEnable: Error at CreateEvent (pcanEventSpawn) (0x%02X)",
 	       GetLastError());
 	return 1;
     }
 
-    /* Create event object that main thread will use to stop worker thread */
-    pcan_exit_event = CreateEvent(&pcan_security_attr, /* lpEventAttributes */
-				   false, /* bManualReset */
-				   false, /* bInitialState */
-				   "pcan_exit_event");
+    // Create event object that main thread will use to stop worker thread
+    pcanEventExit = CreateEvent(&pcanSecurityAttr, // lpEventAttributes
+				false, // bManualReset
+				false, // bInitialState
+				"pcanEventExit");
 
-    if (pcan_exit_event == 0) {
-	printf("pcan_EnableEvent: Error at CreateEvent (pcan_exit_event) (0x%02X)",
+    if (pcanEventExit == 0)
+    {
+	printf("pcanEventEnable: Error at CreateEvent (pcanEventExit) (0x%02X)",
 	       GetLastError());
 	return 1;
     }
 
-    /* Pack paramters into struct to be passed to worker thread */
-    threadParameters_t pcan_thread_params = {
-	pcan_Channel,
+    // Pack paramters into struct to be passed to worker thread
+    threadParameters_t pcanEventThreadParams = {
+	pcanChannel,
 	callback
     };
 
-    /* Spawn the worker thread that will monitor the event */
-    pcan_thread = CreateThread(&pcan_security_attr, /* lpThreadAttributes */
-			       0, /* dwStackSize */
-			       &pcan_thread_proc, /* lpStartAddress */
-			       &pcan_thread_params, /* lpParameter */
-			       0, /* dwCreationFlags */
-			       &pcan_thread_id); /* lpThreadId */
+    // Spawn the worker thread that will monitor the event 
+    pcanEventThread = CreateThread(&pcanSecurityAttr, //lpThreadAttributes
+				   0, // dwStackSize
+				   &pcanEventThreadProc, // lpStartAddress
+				   &pcanEventThreadParams, // lpParameter
+				   0, // dwCreationFlags
+				   &pcanEventThreadID); // lpThreadId
 
-    if (pcan_thread == 0) {
-	printf("pcan_EnableEvent: Error at CreateThread (0x%02X)", GetLastError());
+    if (pcanEventThread == 0)
+    {
+	printf("pcanEventEnable: Error at CreateThread (0x%02X)", GetLastError());
 	return 1;
     }
 
-    /* Wait for pcan_thread_event to be set, indicating that the thread
-       was successfully started */
-    printf("pcan_EnableEvent: Waiting for worker thread to start...\n");
+    // Wait for pcanThread_event to be set, indicating that the thread
+    // was successfully started
+    printf("pcanEventEnable: Waiting for worker thread to start...\n");
 
-    ret = WaitForSingleObject(pcan_spawn_event, 1000);
-    switch (ret) {
+    ret = WaitForSingleObject(pcanEventSpawn, 1000);
+    switch (ret)
+    {
     case WAIT_OBJECT_0:
 	break;
     case WAIT_ABANDONED:
-	printf("pcan_EnableEvent: Error at WaitForSingleObject: WAIT_ABANDONDED\n");
+	printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_ABANDONDED\n");
 	return 1;
     case WAIT_TIMEOUT:
-	printf("pcan_EnableEvent: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
+	printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
 	return 1;
     case WAIT_FAILED:
-	printf("pcan_EnableEvent: Error at WaitForSingleObject: WAIT_FAILED (0x%02X)\n",
+	printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_FAILED (0x%02X)\n",
 	       GetLastError());
 	return 1;
     default:
-	printf("pcan_EnableEvent: Error at WaitForSingleObject: ret = 0x%02X\n", ret);
+	printf("pcanEventEnable: Error at WaitForSingleObject: ret = 0x%02X\n", ret);
 	return 1;
     }
 
-    /* Set the PCAN library to use the receive event */
-    TPCANStatus pcan_result = 0;
+    // Set the PCAN library to use the receive event
+    TPCANStatus pcanResult = 0;
 
-    pcan_result = CAN_SetValue(pcan_Channel, PCAN_RECEIVE_EVENT,
-			       &pcan_read_event, sizeof(pcan_read_event));
+    pcanResult = CAN_SetValue(pcanChannel, PCAN_RECEIVE_EVENT,
+			      &pcanEventRead, sizeof(pcanEventRead));
     
-    if (pcan_result != PCAN_ERROR_OK) {
-	printf("pcan_EnableEvent: Error at CAN_SetValue: 0x%02X (%s)\n",
-	       pcan_result, pcanStatusLookup(pcan_result));
+    if (pcanResult != PCAN_ERROR_OK)
+    {
+	printf("pcanEventEnable: Error at CAN_SetValue: 0x%02X (%s)\n",
+	       pcanResult, pcanStatusLookup(pcanResult));
 	return 1;
     }
 
@@ -141,90 +310,99 @@ int pcan_EnableEvent(TPCANHandle pcan_Channel, void *callback)
 
 
 
-int pcan_DisableEvent(TPCANHandle pcan_Channel)
+int pcanEventDisable(TPCANHandle pcan_Channel)
 {
-    int ret = -1;
+    int ret = 0;
 
-    /* Remove event */
+    // Disable event in PCAN library
     HANDLE dummy_event = INVALID_HANDLE_VALUE;
-    TPCANStatus pcan_result = 0;
+    TPCANStatus pcanResult = PCAN_ERROR_UNKNOWN;
 
-    pcan_result = CAN_SetValue(pcan_Channel, PCAN_RECEIVE_EVENT,
+    pcanResult = CAN_SetValue(pcan_Channel, PCAN_RECEIVE_EVENT,
 			       &dummy_event, sizeof(dummy_event));
 
-    /* Stop the thread */  
-    ret = SetEvent(pcan_exit_event);
-    if (ret == 0) {
-	printf("pcan_DisableEvent: Error at SetEvent (0x%02X)\n",
+    // Stop the worker thread
+    ret = SetEvent(pcanEventExit);
+    if (ret == 0)
+    {
+	printf("pcanEventDisable: Error at SetEvent (0x%02X)\n",
 	       GetLastError());
 	return 1;
     }
 
-    /* Wait for the thread to exit */
-    int pcan_thread_exit_code = 0;
+    // Wait for the worker thread to exit
+    int pcanEventThreadExitCode = 0;
     
-    printf("pcan_DisableEvent: Waiting for worker thread to exit...\n");
-    ret = WaitForSingleObject(pcan_thread, INFINITE);
+    printf("pcanEventDisable: Waiting for worker thread to exit...\n");
+    ret = WaitForSingleObject(pcanEventThread, INFINITE);
 
-    switch (ret) {
+    switch (ret)
+    {
     case WAIT_OBJECT_0:
-	ret = GetExitCodeThread(pcan_thread, &pcan_thread_exit_code);
+	ret = GetExitCodeThread(pcanEventThread, &pcanEventThreadExitCode);
 
-	if (ret == 0) {
-	    printf("pcan_DisableEvent: Error at GetExitCodeThread: 0x%02X\n",
+	if (ret == 0)
+	{
+	    printf("pcanEventDisable: Error at GetExitCodeThread: 0x%02X\n",
 		   GetLastError());
 	    return 1;
 	}
 
-	if (pcan_thread_exit_code == STILL_ACTIVE) {
-	    printf("pcan_DisableEvent: Thread still active.\n");
+	if (pcanEventThreadExitCode == STILL_ACTIVE)
+	{
+	    printf("pcanEventDisable: Thread still active.\n");
 	    return 1;
-	} else {
-	    printf("pcan_DisableEvent: Worker thread exited with code %i\n",
-		   pcan_thread_exit_code);
+	}
+	else
+	{
+	    printf("pcanEventDisable: Worker thread exited with code %i\n",
+		   pcanEventThreadExitCode);
 	}
 	break;
     case WAIT_ABANDONED:
-	printf("pcan_DisableEvent: Error at WaitForSingleObject: WAIT_ABANDONDED\n");
+	printf("pcanEventDisable: Error at WaitForSingleObject: WAIT_ABANDONDED\n");
 	return 1;
     case WAIT_TIMEOUT:
-	printf("pcan_DisableEvent: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
+	printf("pcanEventDisable: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
 	return 1;
     case WAIT_FAILED:
-	printf("pcan_DisableEvent: Error at WaitForSingleObject: WAIT_FAILED (0x%02X)\n",
+	printf("pcanEventDisable: Error at WaitForSingleObject: WAIT_FAILED (0x%02X)\n",
 	       GetLastError());
 	return 1;
     default:
-	printf("pcan_DisableEvent: Error at WaitForSingleObject: ret = 0x%02X\n", ret);
+	printf("pcanEventDisable: Error at WaitForSingleObject: ret = 0x%02X\n", ret);
 	return 1;
     }
 
-    /* Close all handles */
-    ret = CloseHandle(pcan_read_event);
-    if (ret == 0) {
-	printf("pcan_DisableEvent: Error at CloseHandle(pcan_read_event): %i\n",
+    // Close all thread and event handles
+    ret = CloseHandle(pcanEventRead);
+    if (ret == 0)
+    {
+	printf("pcanEventDisable: Error at CloseHandle(pcanEventRead): %i\n",
 	       GetLastError());
 	return 1;
     }
 
-    ret = CloseHandle(pcan_spawn_event);
-    if (ret == 0) {
-	printf("pcan_DisableEvent: Error at CloseHandle(pcan_spawn_event): %i\n",
+    ret = CloseHandle(pcanEventSpawn);
+    if (ret == 0)
+    {
+	printf("pcanEventDisable: Error at CloseHandle(pcanEventSpawn): %i\n",
 	       GetLastError());
 	return 1;
     }
 
-    ret = CloseHandle(pcan_exit_event);
-    if (ret == 0) {
-	printf("pcan_DisableEvent: Error at CloseHandle(pcan_exit_event): %i\n",
+    ret = CloseHandle(pcanEventExit);
+    if (ret == 0)
+    {
+	printf("pcanEventDisable: Error at CloseHandle(pcanEventExit): %i\n",
 	       GetLastError());
 	return 1;
     }
 
-
-    ret = CloseHandle(pcan_thread);
-    if (ret == 0) {
-	printf("pcan_DisableEvent: Error at CloseHandle(pcan_thread): %i\n",
+    ret = CloseHandle(pcanEventThread);
+    if (ret == 0)
+    {
+	printf("pcanEventDisable: Error at CloseHandle(pcanThread): %i\n",
 	       GetLastError());
 	return 1;
     }

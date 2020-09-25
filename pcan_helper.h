@@ -9,11 +9,10 @@
 #ifndef _HELPER_PCAN_H_
 #define _HELPER_PCAN_H_
 
-#include <PCANBasic.h> // provide PCAN-Basic constants and types
-#include <stdint.h> // provide uintX_t
+#include <PCANBasic.h>   // provide PCAN-Basic constants and types
+#include <stdint.h>      // provide uintX_t
 
-
-#include "pcan_thread.h" // provide threadParameters_t
+#include "pcan_event.h" // provide threadParameters_t
 
 
 // ----------------------------------- // -----------------------------------
