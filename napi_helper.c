@@ -1,5 +1,6 @@
 /* NodeJS N-API helper functions
 
+   Functions for viewing N-API statuses, types, and error codes
 
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
@@ -84,8 +85,6 @@ const char napiValuetypeUnknown[] = "N-API valuetype unknown";
 
 // ----------------------------------- // -----------------------------------
 // Public functions
-
-
 
 void napiDumpValue(napi_env env, napi_value value, char* name)
 {

@@ -1,3 +1,11 @@
+/* NodeJS N-API helper functions
+
+   Functions for viewing N-API statuses, types, and error codes
+
+   Copyright (c) 2020 Control Solutions LLC. All rights reserved.
+*/
+
+
 #ifndef _NAPI_HELPER_H_
 #define _NAPI_HELPER_H_
 
@@ -7,7 +15,7 @@
 // ----------------------------------- // -----------------------------------
 // Definitions
 
-// Macro to cleanly declaring array of methods for passing to
+// Macro for concisely declaring array of methods passed to
 // napi_define_properties
 #define DECLARE_NAPI_METHOD(name, func) \
       { name, 0, func, 0, 0, 0, napi_default, 0 }
@@ -37,7 +45,7 @@
 // Public functions
 
 // Print properties of a given napi_value to stdout for debugging purposes
-void napidumpValue(napi_env env, napi_value value, char* name);
+void napiDumpValue(napi_env env, napi_value value, char* name);
 
 
 // Return poiner to string representation of N-API status code, given a status
