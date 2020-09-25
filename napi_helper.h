@@ -1,18 +1,64 @@
-#ifndef _HELPER_NAPI_H_
-#define _HELPER_NAPI_H_
+#ifndef _NAPI_HELPER_H_
+#define _NAPI_HELPER_H_
 
-#include <node_api.h>
+#include <node_api.h> // provide N-API types
 
-/* N-API helpers */
+
+// ----------------------------------- // -----------------------------------
+// Definitions
+
+// Macro to cleanly declaring array of methods for passing to
+// napi_define_properties
 #define DECLARE_NAPI_METHOD(name, func) \
       { name, 0, func, 0, 0, 0, napi_default, 0 }
 
-void napi_value_dump(napi_env env, napi_value value, char* name);
-char *napi_status_lookup(napi_status status);
-char *napi_valuetype_lookup(napi_valuetype valuetype);
-bool napi_check(napi_env env, napi_status status);
-void napi_dump_error_info(napi_extended_error_info *error_info);
 
 
 
-#endif /* _HELPER_NAPI_H_ */
+// ----------------------------------- // -----------------------------------
+// Global variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local functions
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Public functions
+
+// Print properties of a given napi_value to stdout for debugging purposes
+void napidumpValue(napi_env env, napi_value value, char* name);
+
+
+// Return poiner to string representation of N-API status code, given a status
+// code defined in js_native_api_types.h
+const char *napiStatusLookup(napi_status status);
+
+
+// Return pointer to string representation of N-API value type, given a value
+// type defined in js_native_api_types.h
+const char *napiValuetypeLookup(napi_valuetype valuetype);
+
+// Check for error given a napi_status code returned from an N-API call, printing
+// detailed error info to stdout if available
+// Returns true if status == napi_ok, and false otherwise
+bool napiCheck(napi_env env, napi_status status);
+
+// Print all struct members to stdout given an napi_extended_error_info struct
+void napiDumpErrorInfo(napi_extended_error_info *errorInfo);
+
+
+
+
+#endif // _NAPI_HELPER_H_
+
