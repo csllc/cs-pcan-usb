@@ -1,6 +1,6 @@
 #include "common_helper.h"
 
-const char *lookupString(const strLookup_t *table, const char* defaultString, int value)
+const char *lookupString(const lookup_t *table, const char* defaultString, int value)
 {
     int i;
     const char *returnString = 0;

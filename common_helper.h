@@ -14,7 +14,7 @@ typedef struct
 {
     const int value;
     const char* string;
-} strLookup_t;
+} lookup_t;
 
 
 
@@ -42,7 +42,7 @@ typedef struct
 
 // Return pointer to string corresponding to a given integer value and
 // strLookup_t table
-const char *lookupString(const strLookup_t *table, const char *defaultString, int value);
+const char *lookupString(const lookup_t *table, const char *defaultString, int value);
 
 
 

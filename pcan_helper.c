@@ -32,7 +32,7 @@
 
 
 // String lookup table for PCAN statuses
-const strLookup_t pcanStatuses[] = {
+const lookup_t pcanStatuses[] = {
     { PCAN_ERROR_OK,           "PCAN_ERROR_OK" },
     { PCAN_ERROR_XMTFULL,      "PCAN_ERROR_XMTFULL" },
     { PCAN_ERROR_OVERRUN,      "PCAN_ERROR_OVERRUN" },
@@ -71,7 +71,7 @@ const char pcanStatusUnknown[] = "Status unknown";
 
 
 // String lookup table for message types
-const strLookup_t pcanMsgtypes [] = {
+const lookup_t pcanMsgtypes [] = {
     { PCAN_MESSAGE_STANDARD, "PCAN_MESSAGE_STANDARD" },
     { PCAN_MESSAGE_RTR,      "PCAN_MESSAGE_RTR" },
     { PCAN_MESSAGE_EXTENDED, "PCAN_MESSAGE_EXTENDED" },
@@ -89,7 +89,7 @@ const char pcanMsgtypeUnknown[] = "Message type unknown";
 
 
 // String lookup table for parameters
-const strLookup_t pcanParameters [] = {
+const lookup_t pcanParameters [] = {
     { PCAN_DEVICE_ID,                "PCAN_DEVICE_ID" },
     { PCAN_5VOLTS_POWER,             "PCAN_5VOLTS_POWER" },
     { PCAN_RECEIVE_EVENT,            "PCAN_RECEIVE_EVENT" },
