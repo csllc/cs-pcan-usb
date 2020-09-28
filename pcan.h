@@ -146,7 +146,7 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info);
 // - TPCANMsgFD *MessageBuffer (uint64)
 // - TPCANTimestampFD *TimestampBuffer
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
-// or 0 on failure
+// or 0 on failure. CAN message is returned in MessageBuffer.
 #ifndef PCAN_WIN32_ONLY
 napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info);
 #endif
@@ -157,7 +157,7 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info);
 // - TPCANHandle Channel (uint32)
 // - TPCANMsg *MessageBuffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
-// or 0 on failure
+// or 0 on failure. CAN message is returned in MessageBuffer.
 #ifndef PCAN_WIN32_ONLY
 napi_value pcan_CAN_Write(napi_env env, napi_callback_info info);
 #endif
@@ -193,7 +193,7 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info);
 // - TPCANParameter Parameter (uint32)
 // - void *Buffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
-// or 0 on failure
+// or 0 on failure. Parameter value is returned in Buffer.
 #ifndef PCAN_WIN32_ONLY
 napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info);
 #endif
