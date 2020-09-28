@@ -126,7 +126,9 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
     events[EVENT_INDEX_EXIT] = pcanEventExit;
 
     while (threadExit == 0) {
+#ifdef PCAN_EVENT_DEBUG
 	printf("pcanEventThreadProc: Waiting for read_event or thread_event...\n");
+#endif
 	ret = WaitForMultipleObjects(2, // nCount
 				     events, // lpHandles
 				     false, // bWaitAll
@@ -156,7 +158,9 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
 		(threadParams.callback)(threadParams.canChannel);
 		break;
 	    case EVENT_INDEX_EXIT: // Cleanup and exit thread cleanly
+#ifdef PCAN_EVENT_DEBUG
 		printf("pcanEventThreadProc: Exiting thread\n");
+#endif
 		CloseHandle(pcanEventRead);
 		CloseHandle(pcanEventSpawn);
 		CloseHandle(pcanEventExit);
@@ -269,7 +273,9 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
     // Wait for pcanThread_event to be set, indicating that the thread
     // was successfully started
+#ifdef PCAN_EVENT_DEBUG
     printf("pcanEventEnable: Waiting for worker thread to start...\n");
+#endif
 
     ret = WaitForSingleObject(pcanEventSpawn, 1000);
     switch (ret)
@@ -333,7 +339,10 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     // Wait for the worker thread to exit
     int pcanEventThreadExitCode = 0;
     
+#ifdef PCAN_EVENT_DEBUG
     printf("pcanEventDisable: Waiting for worker thread to exit...\n");
+#endif
+
     ret = WaitForSingleObject(pcanEventThread, INFINITE);
 
     switch (ret)
@@ -355,8 +364,10 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
 	}
 	else
 	{
+#ifdef PCAN_EVENT_DEBUG
 	    printf("pcanEventDisable: Worker thread exited with code %i\n",
 		   pcanEventThreadExitCode);
+#endif
 	}
 	break;
     case WAIT_ABANDONED:

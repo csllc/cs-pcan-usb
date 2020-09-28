@@ -13,6 +13,10 @@
 #include <PCANBasic.h> // provide PCAN-Basic constants and types
 
 
+//#define PCAN_EVENT_DEBUG
+// Uncomment to enable debugging messages, which may affect timing or
+// performance
+
 // ----------------------------------- // -----------------------------------
 // Definitions
 
