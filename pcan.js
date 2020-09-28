@@ -1,48 +1,15 @@
 const events = require('events');
-const process = require('process');
 const pcan = require('bindings')('pcan.node');
-
-function TPCANMsg(id = 0,
-		  msgtype = 0,
-		  len = 0,
-		  data = 0) {
-  this.id = id;
-  this.msgtype = msgtype;
-  this.len = len;
-  this.data = data;
-}
-
-function TPCANTimestamp(millis = 0,
-			millis_overflow = 0, 
-			micros = 0) {
-  this.millis = millis;
-  this.millis_overflow = millis_overflow;
-  this.micros = 0;
-}
-
-
-function TPCANMsgFD(id = 0,
-		  msgtype = 0,
-		  dlc = 0,
-		  data = 0) {
-  this.id = id;
-  this.msgtype = msgtype;
-  this.dlc = dlc;
-  this.data = data;
-}
-
-
-function TPCANTimestampFD(timestamp = 0) {
-  this.timestamp = timestamp;
-}
+const tpcan = require('./lib/tpcan');
 
 let channel = 0x51;
 let baud = 0x001C; /* 500 kbaud */
 
 const canEmitter = new events.EventEmitter();
 
-var msg = new TPCANMsg();
-var timestamp = new TPCANTimestamp();
+var msg = new tpcan.TPCANMsg();
+var timestamp = new tpcan.TPCANTimestamp();
+
 
 process.on('SIGINT', function () {
   console.log("SIGINT received");
@@ -55,6 +22,9 @@ process.on('SIGINT', function () {
   process.exit(0);
 });
 
+
+channels = pcan.CAN_ChannelInfo();
+console.log(channels);
 
 pcan.CAN_Initialize(channel, baud);
 pcan.CAN_SetValue(channel, 0x04 /* PCAN_MESSAGE_FILTER */, Buffer.from([0x00]));
