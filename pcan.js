@@ -20,6 +20,22 @@ function TPCANTimestamp(millis = 0,
   this.micros = 0;
 }
 
+
+function TPCANMsgFD(id = 0,
+		  msgtype = 0,
+		  dlc = 0,
+		  data = 0) {
+  this.id = id;
+  this.msgtype = msgtype;
+  this.dlc = dlc;
+  this.data = data;
+}
+
+
+function TPCANTimestampFD(timestamp = 0) {
+  this.timestamp = timestamp;
+}
+
 let channel = 0x51;
 let baud = 0x001C; /* 500 kbaud */
 
