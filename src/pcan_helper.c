@@ -393,3 +393,61 @@ const char *pcanDeviceTypeLookup(TPCANDevice device)
     return deviceString;
 }
 
+
+
+
+int pcanTranslateBaud(uint32_t baudInt)
+{
+    int translated = 0;
+
+    switch (baudInt) {
+    case 1000000: // 1M
+	translated = PCAN_BAUD_1M;
+	break;
+    case 800000: // 800k
+	translated = PCAN_BAUD_800K;
+	break;
+    case 500000: // 500k
+	translated = PCAN_BAUD_500K;
+	break;
+    case 250000: // 250k
+	translated = PCAN_BAUD_250K;
+	break;
+    case 125000: // 125k
+	translated = PCAN_BAUD_125K;
+	break;
+    case 100000: // 100k
+	translated = PCAN_BAUD_100K;
+	break;
+    case 95000: // 95k
+	translated = PCAN_BAUD_95K;
+	break;
+    case 83000: // 83k
+	translated = PCAN_BAUD_83K;
+	break;
+    case 50000: // 50k
+	translated = PCAN_BAUD_50K;
+	break;
+    case 47000: // 47k
+	translated = PCAN_BAUD_47K;
+	break;
+    case 33000: // 33k
+	translated = PCAN_BAUD_33K;
+	break;
+    case 20000: // 20k
+	translated = PCAN_BAUD_20K;
+	break;
+    case 10000: // 10k
+	translated = PCAN_BAUD_10K;
+	break;
+    case 5000: // 5k
+	translated = PCAN_BAUD_5K;
+	break;
+    default:
+	translated = 0; // Unknown
+	break;
+    }
+
+    return translated;
+}
+

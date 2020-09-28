@@ -90,6 +90,10 @@ void pcanDumpChannelInfo(TPCANChannelInformation *info);
 // given a device type defined in PCANBasic.h
 const char *pcanDeviceTypeLookup(TPCANDevice device);
 
+// Return the API constant for a given integer CAN baud (5000 to 1000000), or 0
+// for an undefined baud
+int pcanTranslateBaud(uint32_t baudInt);
+
 
 #endif // _PCAN_HELPER_H_
 

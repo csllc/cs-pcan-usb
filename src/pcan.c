@@ -24,7 +24,7 @@
 
 
 // Length of N-API module descriptor list, used in Init
-enum { descriptors_len = 18 };
+enum { descriptors_len = 19 };
 
 
 
@@ -85,6 +85,7 @@ napi_value Init(napi_env env, napi_value exports)
 	DECLARE_NAPI_METHOD("CAN_AcceptanceFilter29Bit", pcan_CAN_AcceptanceFilter29Bit),
 	DECLARE_NAPI_METHOD("CAN_AcceptanceFilter11Bit", pcan_CAN_AcceptanceFilter11Bit),
 	DECLARE_NAPI_METHOD("CAN_ChannelInfo", pcan_CAN_ChannelInfo),
+	DECLARE_NAPI_METHOD("CAN_TranslateBaud", pcan_CAN_TranslateBaud),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);
@@ -1282,7 +1283,7 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
     pcanStatus = CAN_SetValue(pcanChannel, PCAN_ACCEPTANCE_FILTER_29BIT,
 			       &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
 
-// Print result to console
+    // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_AcceptanceFilter29Bit:\n"
 	   "  pcanStatus            = 0x%02X (%s)\n"
@@ -1461,3 +1462,44 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
     return channelInfo;
 }
 
+
+
+
+napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    // Get callback info and argument list
+    size_t argc = CAN_TRANSLATEBAUD_ARGC;
+    napi_value argv[CAN_TRANSLATEBAUD_ARGC];
+
+    status = napi_get_cb_info(env, info, &argc, argv, 0, 0);
+    assert(status == napi_ok);
+
+    if (argc != CAN_TRANSLATEBAUD_ARGC) {
+	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+	return 0;
+    }
+
+    // Retreive arguments
+    // argv[0] Integer baud
+    uint32_t baudInt;
+    status = napi_get_value_uint32(env, argv[0], &baudInt);
+    assert(status == napi_ok);
+
+    // Translate into a PCAN-Basic constant
+    TPCANBaudrate baudAPI;
+    baudAPI = pcanTranslateBaud(baudInt);
+
+    if (baudAPI == 0) {
+	napi_throw_error(env, 0, "Unknown CAN baud specified.");
+	return 0;
+    }
+
+    // Create N-API value to return
+    napi_value baudResult;
+    status = napi_create_uint32(env, baudAPI, &baudResult);
+    assert(status == napi_ok);
+
+    return baudResult;
+}

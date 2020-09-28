@@ -47,6 +47,7 @@
 #define CAN_ACCEPTANCEFILTER11BIT_ARGC (3)
 #define CAN_ACCEPTANCEFILTER29BIT_ARGC (3)
 #define CAN_CHANNELINFO_ARGC (0)
+#define CAN_TRANSLATEBAUD_ARGC (1)
 
 
 // ----------------------------------- // -----------------------------------
@@ -278,12 +279,24 @@ napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
 napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info);
 #endif
 
+
 // Return list of available PCAN channels on the system
 // Arguments passed through N-API:
 // - (none)
 // Returns N-API array of TPCANChannelInfo-like objects, or 0 on failure.
+#ifndef PCAN_WIN32_ONLY
 napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info);
+#endif
 
+
+// Return uint32 API constant corresponding to an integer CAN baud defined in
+// PCANBasic.h, which can be passed to pcan_CAN_Initialize
+// Arguments passed through N-API:
+// - uint32_t baud (uint32)
+// Returns uint32 constant on success or 0 on failure
+#ifndef PCAN_WIN32_ONLY
+napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info);
+#endif
 
 #endif /* _PCAN_H_ */
 
