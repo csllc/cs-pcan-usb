@@ -82,11 +82,9 @@ void pcanDumpThreadParams(threadParameters_t *threadParameters);
 // Return message size, in bytes, given a DLC code
 uint8_t pcanDLCDecode(uint8_t dlc);
 
-
 // Print the contents of a TPCANChannelInfo structure to stdout
 // in a human-readable format for debugging purposes
 void pcanDumpChannelInfo(TPCANChannelInformation *info);
-
 
 // Return pointer to string representation ofa PCAN device type,
 // given a device type defined in PCANBasic.h

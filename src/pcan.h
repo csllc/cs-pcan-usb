@@ -11,7 +11,7 @@
 #define _PCAN_H_
 
 
-#define PCAN_DEBUG
+//#define PCAN_DEBUG
 // Uncomment to enable debugging messages, which may affect timing or
 // performance
 

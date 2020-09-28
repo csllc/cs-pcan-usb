@@ -1311,6 +1311,7 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
+    int i; // for loop variable
 
     // Get callback info and argument list
     size_t argc = CAN_CHANNELINFO_ARGC;
@@ -1332,7 +1333,7 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 			      &pcanAttachedChannelsCount, sizeof(pcanAttachedChannelsCount));
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatus, "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS_COUNT).");
+	napi_throw_error(env, pcanStatusLookup(pcanStatus), "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS_COUNT).");
 	return 0;
     }
     
@@ -1342,7 +1343,9 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 	return 0;
     }
 
-    printf("pcan_CAN_ListPorts: %i channel(s) available\n", pcanAttachedChannelsCount);
+#ifdef PCAN_DEBUG
+    printf("pcan_CAN_ChannelInfo: %i channel(s) available\n", pcanAttachedChannelsCount);
+#endif
 
     // Create empty channel list
     // Use of malloc and free here violates CSLLC Rule 163
@@ -1363,13 +1366,12 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 			      pcanAttachedChannels, pcanAttachedChannels_sz);
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatus, "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS).");
+	napi_throw_error(env, pcanStatusLookup(pcanStatus), "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS).");
 	return 0;
     }
 
     // Print result to console
 #ifdef PCAN_DEBUG
-    int i;
     for (i = 0; i < pcanAttachedChannelsCount; i++) {
 	pcanDumpChannelInfo(&(pcanAttachedChannels[i]));
     }
