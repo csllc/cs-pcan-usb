@@ -19,7 +19,7 @@
 // This is required when compiling test programs that rely soley on the Win32
 // and PCAN-Basic APIs.
 
-#ifndef _PCAN_WIN32_ONLY_
+#ifndef PCAN_WIN32_ONLY
 #include <node_api.h>
 #endif
 
@@ -68,7 +68,9 @@ void pcan_CAN_EventCallback(int channel);
 
 
 // Initialize N-API module
+#ifndef PCAN_WIN32_ONLY
 napi_value Init(napi_env env, napi_value exports);
+#endif
 
 // ----------------------------------- // -----------------------------------
 // Public functions
@@ -169,7 +171,7 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info);
 // - TPCANMsgFD *MessageBuffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // or 0 on failure
-#ifdef PCAN_WIN32_ONLY
+#ifndef PCAN_WIN32_ONLY
 napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info);
 #endif
 
