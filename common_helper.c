@@ -1,4 +1,39 @@
+/* Common helper functions used by both PCAN-Basic and N-API components
+
+   Copyright (c) 2020 Control Solutions LLC. All rights reserved.
+*/
+
+
 #include "common_helper.h"
+
+
+// ----------------------------------- // -----------------------------------
+// Definitions
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Global variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local variables
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Local functions
+
+
+
+
+// ----------------------------------- // -----------------------------------
+// Public functions
+
 
 const char *lookupString(const lookup_t *table, const char* defaultString, int value)
 {

@@ -10,6 +10,7 @@
 #ifndef _PCAN_H_
 #define _PCAN_H_
 
+
 //#define PCAN_DEBUG
 // Uncomment to enable debugging messages, which may affect timing or
 // performance
@@ -19,8 +20,9 @@
 // This is required when compiling test programs that rely soley on the Win32
 // and PCAN-Basic APIs.
 
+
 #ifndef PCAN_WIN32_ONLY
-#include <node_api.h>
+#include <node_api.h> // provide N-API types
 #endif
 
 

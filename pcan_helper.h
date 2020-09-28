@@ -6,13 +6,14 @@
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
 
+
 #ifndef _PCAN_HELPER_H_
 #define _PCAN_HELPER_H_
 
 #include <PCANBasic.h>   // provide PCAN-Basic constants and types
 #include <stdint.h>      // provide uintX_t
 
-#include "pcan_event.h" // provide threadParameters_t
+#include "pcan_event.h"  // provide threadParameters_t
 
 
 // ----------------------------------- // -----------------------------------

@@ -7,18 +7,16 @@
 */
    
 
-#include <assert.h>
-#include <node_api.h> // provide N-API types, constants, and functions
-#include <stdio.h>    // provide printf
-#include <windows.h>  // provide Win32 types, constants, and functions
-//#include <process.h>  // ??
-
-#include "PCANBasic.h"
+#include <assert.h>      // provide assert
+#include <node_api.h>    // provide N-API types, constants, and functions
+#include <stdio.h>       // provide printf
+#include <windows.h>     // provide Win32 types, constants, and functions
+#include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
 
 #include "pcan.h"
-#include "pcan_helper.h"
-#include "pcan_event.h"
-#include "napi_helper.h"
+#include "pcan_helper.h" // provide pcanDLCDecode
+#include "pcan_event.h"  // provide pcanEventEnable and pcanEventDisable
+#include "napi_helper.h" // provide DECLARE_NAPI_METHOD
 
 
 // ----------------------------------- // -----------------------------------
