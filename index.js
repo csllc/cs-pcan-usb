@@ -1,13 +1,7 @@
 'use strict';
 
-//const events = require('events');
-//const process = require('process');
-
-
 const pcan = require('bindings')('pcan.node');
-
 const { Duplex } = require('stream');
-
 const tpcan = require('./lib/tpcan.js');
 
 // Default configuration used unless overridden by caller
@@ -40,7 +34,7 @@ module.exports = class PcanUsb extends Duplex {
   // Returns a promise that resolves to a list of available CAN ports
   list() {
     return new Promise(function(resolve, reject) {
-      resolve(pcan.CAN_ChannelInfo());
+      resolve(pcan.ChannelInfo());
     })
       .then(function(channels) {
 	// For compatibility, create a new property 'path' that is the
@@ -52,7 +46,7 @@ module.exports = class PcanUsb extends Duplex {
 	return channels;
       })
       .catch(function(err) {
-	reject(err);//TODO: Make sure this works as expected
+	throw new Error(err);
       });
   };
 
@@ -61,7 +55,7 @@ module.exports = class PcanUsb extends Duplex {
 
     return new Promise(function(resolve, reject) {
       // Initialize CAN port (aka "channel")
-      let result = pcan.CAN_Initialize(port, pcan.CAN_TranslateBaud(me.options.canRate));
+      let result = pcan.Initialize(port, pcan.TranslateBaud(me.options.canRate));
       if (result != 0) {
 	reject(result);
       } else {
@@ -76,9 +70,9 @@ module.exports = class PcanUsb extends Duplex {
 
 	// Set up close event handler
 	me.on('close', function() {
-	  pcan.CAN_DisableEvent(me.port);
-	  pcan.CAN_Reset(me.port);
-	  pcan.CAN_Uninitialize(me.port);
+	  pcan.DisableEvent(me.port);
+	  pcan.Reset(me.port);
+	  pcan.Uninitialize(me.port);
 	  
 	  me.isReady = false;
 	  me.port = null;
@@ -86,11 +80,11 @@ module.exports = class PcanUsb extends Duplex {
 	});
       
 	// Enable data event
-	let result = pcan.CAN_EnableEvent(port, function() {
+	let result = pcan.EnableEvent(port, function() {
 	  me.emit('_data');
 	});
 	if (result != 0) {
-	  throw new Error("Error at pcan.CAN_EnableEvent.");
+	  throw new Error("Error at pcan.EnableEvent.");
 	}
 	me.isReady = true;
 
@@ -107,9 +101,9 @@ module.exports = class PcanUsb extends Duplex {
     if (this.isOpen()) {
       try {
 	me.emit('close');
-	pcan.CAN_DisableEvent(me.port);
-	pcan.CAN_Reset(me.port);
-	pcan.CAN_Uninitialize(me.port);
+	pcan.DisableEvent(me.port);
+	pcan.Reset(me.port);
+	pcan.Uninitialize(me.port);
       } catch (err) {
 	me.emit('error', err);
 	console.error(err);
@@ -126,7 +120,7 @@ module.exports = class PcanUsb extends Duplex {
       let tpcan_buffer = tpcan.toTPCANMsg(msg);
       // Write message to bus
       try {
-	pcan.CAN_Write(me.port, tpcan_buffer);
+	pcan.Write(me.port, tpcan_buffer);
 	me.emit('write', mmsg);
       } catch (err) {
 	me.emit('error');
@@ -145,7 +139,7 @@ module.exports = class PcanUsb extends Duplex {
     let me = this;
 
     try {
-      return pcan.CAN_Status(me.port);
+      return pcan.Status(me.port);
     } catch (err) {
       me.emit('error', err);
       console.error(err);
@@ -166,7 +160,7 @@ module.exports = class PcanUsb extends Duplex {
     let me = this;
     
     try {
-      let read_obj = pcan.CAN_Read(me.port);
+      let read_obj = pcan.Read(me.port);
       me.push(tpcan.toMsg(read_obj.message)) // Emits 'data' event
     } catch(err) {
       if (err.code != "PCAN_ERROR_QRCVEMPTY") {
@@ -199,16 +193,16 @@ module.exports = class PcanUsb extends Duplex {
       for (var i in me.options.filters) {
 	if ((me.options.filters[i].code) && (me.options.filters[i].mask)) {
 	  if (me.options.filters[i].ext) {
-	    pcan.CAN_AcceptanceFilter29Bit(me.port, me.options.filters[i].code,
+	    pcan.AcceptanceFilter29Bit(me.port, me.options.filters[i].code,
 					   me.options.filters[i].mask);
 	    // TODO: Will this thrown exceptions as expected?
 	  } else {
-	    pcan.CAN_AcceptanceFilter11Bit(me.port, me.options.filters[i].code,
+	    pcan.AcceptanceFilter11Bit(me.port, me.options.filters[i].code,
 					   me.options.filters[i].mask);
 	  }
 	} else if ((me.options.filters[i].fromID) && (me.options.filters[i].toID)){
 
-	  pcan.CAN_FilterMessages(me.port, fromID, toID, 0x02);
+	  pcan.FilterMessages(me.port, fromID, toID, 0x02);
 
 	} else if (me.options.filters[i].id) {
 
@@ -216,7 +210,7 @@ module.exports = class PcanUsb extends Duplex {
 	  let fromID = parseInt(me.options.filters[i].id.split(' ')[0], 16);
 	  let toID = parseInt(me.options.filters[i].id.split(' ')[1], 16);
 
-	  pcan.CAN_FilterMessages(me.port, fromID, toID, 0x02);
+	  pcan.FilterMessages(me.port, fromID, toID, 0x02);
 
 	} else {
 	  throw new Error("Unknown or unspecified filter format.");
