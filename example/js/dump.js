@@ -2,7 +2,7 @@
 // to the console.
 // CTRL-C stops the example
 
-const Can = require('..');
+const Can = require('../..');
 
 let board = new Can({
   // Serial port baud rate

@@ -5,7 +5,7 @@
 // response )
 
 
-const Can = require('..');
+const Can = require('../..');
 
 let board = new Can({
   canRate: 500000,
@@ -32,7 +32,7 @@ board.list()
 
     // Event handler for each incoming message
     board.on('data', function(msg) {
-      console.log('Msg: ', msg.id.toString(16), msg.data);
+      console.log('Msg: ', msg.id.toString(16), msg.buf);
     });
 
     // Open the COM port and initialize the USBCAN device...

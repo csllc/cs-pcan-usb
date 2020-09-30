@@ -116,12 +116,12 @@ module.exports = class PcanUsb extends Duplex {
   write(msg) {
     let me = this;
 
-    if (msg.length <= 8) {
+    if (msg.buf.length <= 8) {
       let tpcan_buffer = tpcan.toTPCANMsg(msg);
       // Write message to bus
       try {
 	pcan.Write(me.port, tpcan_buffer);
-	me.emit('write', mmsg);
+	me.emit('write', msg);
       } catch (err) {
 	me.emit('error');
 	console.error(err);
