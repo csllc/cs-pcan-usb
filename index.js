@@ -61,6 +61,8 @@ module.exports = class PcanUsb extends Duplex {
       } else {
 	me.port = port;
 	me._configure();
+	me.isReady = true;
+	me.emit('open');
 	resolve(result);
       }
     })
@@ -86,7 +88,6 @@ module.exports = class PcanUsb extends Duplex {
 	if (result != 0) {
 	  throw new Error("Error at pcan.EnableEvent.");
 	}
-	me.isReady = true;
 
       })
       .catch(function(err) {
