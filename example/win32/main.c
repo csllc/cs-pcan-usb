@@ -53,12 +53,12 @@ int main(void)
     pcanAcceptanceFilter |= ((uint64_t)pcanAcceptanceCode << 0x20);
     pcanAcceptanceFilter |= ((uint64_t)(~pcanAcceptanceMask));
 
-    printf("pcan_AcceptanceFilter = %016llX\n", pcanAcceptanceFilter);
+//    printf("pcan_AcceptanceFilter = %016llX\n", pcanAcceptanceFilter);
 
-    pcanResult = CAN_SetValue(channel, PCAN_ACCEPTANCE_FILTER_29BIT,
-			       &pcanAcceptanceFilter, sizeof(pcanAcceptanceFilter));
-    printf("CAN_SetValue (PCAN_ACCEPTANCE_FILTER_29BIT): 0x%02X (%s)\n",
-	   pcanResult, pcanStatusLookup(pcanResult));
+//    pcanResult = CAN_SetValue(channel, PCAN_ACCEPTANCE_FILTER_29BIT,
+//                             &pcanAcceptanceFilter, sizeof(pcanAcceptanceFilter));
+//    printf("CAN_SetValue (PCAN_ACCEPTANCE_FILTER_29BIT): 0x%02X (%s)\n",
+//         pcanResult, pcanStatusLookup(pcanResult));
 
     pcanResult = CAN_GetStatus(channel);
     printf("CAN_GetStatus: 0x%02X (%s)\n", pcanResult, pcanStatusLookup(pcanResult));
@@ -90,16 +90,16 @@ void callback(int channel)
     TPCANTimestamp timestamp = { 0 };
     
     do {
-	ZeroMemory(&msg, sizeof(msg));
-	ZeroMemory(&timestamp, sizeof(timestamp));
+        ZeroMemory(&msg, sizeof(msg));
+        ZeroMemory(&timestamp, sizeof(timestamp));
 
-	status = CAN_Read(channel, &msg, &timestamp);
+        status = CAN_Read(channel, &msg, &timestamp);
 
-	if (status == PCAN_ERROR_OK) {
-	    //printf("---\n");
-	    pcanDumpMsg(&msg);
-	    //pcan_dump_timestamp(&timestamp);
-	}
+        if (status == PCAN_ERROR_OK) {
+            //printf("---\n");
+            pcanDumpMsg(&msg);
+            //pcan_dump_timestamp(&timestamp);
+        }
     } while (status == PCAN_ERROR_OK);
     
     return;
