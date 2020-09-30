@@ -149,7 +149,7 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     // Initialize CAN bus
     TPCANStatus pcanStatus = PCAN_ERROR_UNKNOWN;
     pcanStatus = CAN_Initialize(pcanChannel, pcanBtr0Btr1, 0, 0, 0);
-    
+   
     // Print results to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_Initialize:\n"
@@ -160,6 +160,13 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 	   pcanChannel,
 	   pcanBtr0Btr1);
 #endif
+
+    // Throw error, if any
+    if (pcanStatus != PCAN_ERROR_OK) {
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_Initialize: Error at CAN_Initialize.");
+	return 0;
+    }
     
     // Create an N-API value for the result and return it
     napi_value result;
@@ -215,6 +222,13 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
 	   pcanBitrateFD);
 #endif
 
+    // Throw error, if any
+    if (pcanStatus != PCAN_ERROR_OK) {
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_InitializeFD: Error at CAN_InitializeFD.");
+	return 0;
+    }
+
     // Create N-API value for the result and return it
     napi_value result;
     status = napi_create_int32(env, pcanStatus, &result);
@@ -258,6 +272,13 @@ napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info)
 	   pcanStatus, pcanStatusLookup(pcanStatus));
 #endif
 
+    // Throw error, if any
+    if (pcanStatus != PCAN_ERROR_OK) {
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_Uninitialize: Error at CAN_Uninitialize.");
+	return 0;
+    }
+
     // Create a N-API value for the result and return it
     napi_value result;
     status = napi_create_int32(env, pcanStatus, &result);
@@ -300,6 +321,13 @@ napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info)
     printf("pcan_CAN_Reset: 0x%02X (%s)\n",
 	   pcanStatus, pcanStatusLookup(pcanStatus));
 #endif
+
+    // Throw error, if any
+    if (pcanStatus != PCAN_ERROR_OK) {
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_Reset: Error at CAN_Reset.");
+	return 0;
+    }
 
     // Create a N-API value for the result and return it
     napi_value result;
@@ -378,6 +406,7 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     status = napi_get_value_int32(env, argv[0], (int32_t*)&pcanChannel);
     assert(status == napi_ok);
 
+#if 0
     // argv[1] MessageBuffer
     napi_valuetype pcanMessageBufferType;
     status = napi_typeof(env, argv[1], &pcanMessageBufferType);
@@ -399,12 +428,12 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
 	napi_throw_type_error(env, 0, "Argument 2 (TimestampBuffer) is not an object.");
 	return 0;
     }
+#endif
 
     // Read from CAN bus
     TPCANMsg msg = { 0 };
     TPCANTimestamp timestamp = { 0 };
     TPCANStatus pcanStatus = PCAN_ERROR_UNKNOWN;
-
     pcanStatus = CAN_Read(pcanChannel, &msg, &timestamp);
     
     // Print the result to console
@@ -414,8 +443,24 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     pcanDumpTimestamp(&timestamp);
 #endif
 
+    // Throw error, if any
+    if (pcanStatus != PCAN_ERROR_OK) {
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_Read");
+	return 0;
+    }
+
+    // Create parent objects for read data
+    napi_value pcanMessageBuffer;
+    status = napi_create_object(env, &pcanMessageBuffer);
+    assert(status == napi_ok);
+
+    napi_value pcanTimestampBuffer;
+    status = napi_create_object(env, &pcanTimestampBuffer);
+    assert(status == napi_ok);
+
     // Copy read values into objects passed from N-API
-    // arvg[1] MessageBuffer
+    // MessageBuffer
     napi_value pcanMessageBufferID; // uint32
     napi_value pcanMessageBufferMsgtype; // uint32
     napi_value pcanMessageBufferLen; // uint32
@@ -424,52 +469,58 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     
     status = napi_create_uint32(env, msg.ID, &pcanMessageBufferID);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[1], "id", pcanMessageBufferID);
+    status = napi_set_named_property(env, pcanMessageBuffer, "id", pcanMessageBufferID);
     assert(status == napi_ok);
     
     status = napi_create_uint32(env, msg.MSGTYPE, &pcanMessageBufferMsgtype);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[1], "msgtype", pcanMessageBufferMsgtype);
+    status = napi_set_named_property(env, pcanMessageBuffer, "msgtype", pcanMessageBufferMsgtype);
     assert(status == napi_ok);
     
     status = napi_create_uint32(env, msg.LEN, &pcanMessageBufferLen);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[1], "len", pcanMessageBufferLen);
+    status = napi_set_named_property(env, pcanMessageBuffer, "len", pcanMessageBufferLen);
     assert(status == napi_ok);
 
     status = napi_create_buffer_copy(env, msg.LEN, (void*)&(msg.DATA),
 				     (void*)&pcanMessageBufferDataResult,
 				     &pcanMessageBufferData);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[1], "data", pcanMessageBufferData);
+    status = napi_set_named_property(env, pcanMessageBuffer, "data", pcanMessageBufferData);
     assert(status == napi_ok);
 
-    // argv[2] TimestampBuffer
+    // TimestampBuffer
     napi_value pcanTimestampBufferMillis; // uint32
     napi_value pcanTimestampBufferMillisOverflow; // uint32
     napi_value pcanTimestampBufferMicros; // uint32
 
     status = napi_create_uint32(env, timestamp.millis, &pcanTimestampBufferMillis);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[2], "millis",
+    status = napi_set_named_property(env, pcanTimestampBuffer, "millis",
 				     pcanTimestampBufferMillis);
 
     status = napi_create_uint32(env, timestamp.millis_overflow,
 				&pcanTimestampBufferMillisOverflow);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[2], "millis_overflow",
+    status = napi_set_named_property(env, pcanTimestampBuffer, "millis_overflow",
 				     pcanTimestampBufferMillisOverflow);
 
     status = napi_create_uint32(env, timestamp.micros, &pcanTimestampBufferMicros);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[2], "micros",
+    status = napi_set_named_property(env, pcanTimestampBuffer, "micros",
 				     pcanTimestampBufferMicros);
 
-    // Create a N-API value for the result and return it
-    napi_value result;
-    status = napi_create_int32(env, pcanStatus, &result);
+    // Create a N-API value for the complete read data and return it
+    napi_value pcanReadData;
+    status = napi_create_object(env, &pcanReadData);
     assert(status == napi_ok);
-    return result;
+
+    status = napi_set_named_property(env, pcanReadData, "message", pcanMessageBuffer);
+    assert(status == napi_ok);
+    status = napi_set_named_property(env, pcanReadData, "timestamp", pcanTimestampBuffer);
+    assert(status == napi_ok);
+    
+    return pcanReadData;
 }
 
 
@@ -1084,21 +1135,26 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     // argv[1] Callback
-    napi_valuetype pcan_callback_type;
-    status = napi_typeof(env, argv[1], &pcan_callback_type);
+    napi_valuetype pcanCallbackType;
+    status = napi_typeof(env, argv[1], &pcanCallbackType);
     assert(status == napi_ok);
 
+    if (pcanCallbackType != napi_function) {
+	napi_throw_type_error(env, 0, "Argument 1 (Callback) is not a function.");
+	return 0;
+    }
+
     // Create resource name string, used below
-    napi_value async_resource_name;
+    napi_value asyncResourceName;
     status = napi_create_string_utf8(env, "pcan_callback",
-				     NAPI_AUTO_LENGTH, &async_resource_name);
+				     NAPI_AUTO_LENGTH, &asyncResourceName);
     assert(status == napi_ok);
 
     // Create thread-safe function to use as a callback
     status = napi_create_threadsafe_function(env,
 					     argv[1],
 					     0, // async_resource
-					     async_resource_name,
+					     asyncResourceName,
 					     0, // max_queue_size
 					     1, // initial_thread_count
 					     0, // thread_finalize_data
@@ -1334,7 +1390,8 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 			      &pcanAttachedChannelsCount, sizeof(pcanAttachedChannelsCount));
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus), "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS_COUNT).");
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS_COUNT).");
 	return 0;
     }
     
@@ -1356,7 +1413,7 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
     pcanAttachedChannels = malloc(pcanAttachedChannels_sz);
 
     if (pcanAttachedChannels == 0) {
-	napi_throw_error(env, 0, "Error allocating memory for TPCANChannelInformation");
+	napi_throw_error(env, 0, "Error allocating memory for TPCANChannelInformation.");
 	return 0;
     }
 
@@ -1367,7 +1424,8 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 			      pcanAttachedChannels, pcanAttachedChannels_sz);
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus), "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS).");
+	napi_throw_error(env, pcanStatusLookup(pcanStatus),
+			 "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS).");
 	return 0;
     }
 
