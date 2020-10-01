@@ -1621,6 +1621,12 @@ napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info)
 	return 0;
     }
 
+    // Print result to console
+#ifdef PCAN_DEBUG
+    printf("pcan_CAN_TranslateBaud: baudInt = %i, baudAPI = 0x%04X\n",
+	   baudInt, baudAPI);
+#endif
+
     // Create N-API value to return
     napi_value baudResult;
     status = napi_create_uint32(env, baudAPI, &baudResult);
