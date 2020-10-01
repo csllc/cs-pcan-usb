@@ -89,6 +89,12 @@ module.exports = class PcanUsb extends Duplex {
 	  throw new Error("Error at pcan.EnableEvent.");
 	}
 
+	// Enable busoff auto-reset
+	result = pcan.SetValue(port, 0x07, Buffer.from([0x01]));
+	if (result != 0) {
+	  throw new Error("Error turning on busoff auto-reset");
+	}
+
       })
       .catch(function(err) {
 	me.emit('error', err);
@@ -124,8 +130,8 @@ module.exports = class PcanUsb extends Duplex {
 	pcan.Write(me.port, tpcan_buffer);
 	me.emit('write', msg);
       } catch (err) {
-	me.emit('error');
 	console.error(err);
+	me.emit('error');
       }
       // If loopback is enabled, push message back into receive stream
       if (me.options.loopback) {
