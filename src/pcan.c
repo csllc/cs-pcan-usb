@@ -40,7 +40,7 @@ enum { descriptors_len = 19 };
 
 // Data read callback function, created in main thread and called from worker
 // thread
-napi_threadsafe_function pcan_callback = { 0 };
+napi_threadsafe_function pcanCallback = { 0 };
 
 
 
@@ -105,12 +105,17 @@ void pcan_CAN_EventCallback(int channel)
     printf("pcan_CAN_EventCallback()\n");
 #endif
 
-    status = napi_call_threadsafe_function(pcan_callback, 0, true);
+    status = napi_call_threadsafe_function(pcanCallback, 0, true);
     assert(status == napi_ok);
 
     return;
 }
 
+
+void pcan_CAN_EventFinalize(napi_env env, void* finalize_data, void* finalize_hint)
+{
+    printf("pcan_CAN_EventFinalize\n");
+}
 
 
 
@@ -132,7 +137,7 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     if (argc != CAN_INITIALIZE_ARGC)
     {
 	napi_throw_type_error(env, 0, "Incorrect number of arguments."
-			      "This implemtnation of CAN_Initialize accepts Channel and "
+			      "This implementation of CAN_Initialize accepts Channel and "
 			      "Btr0Btr1.");
 	return 0;
     }
@@ -1171,26 +1176,26 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
 
     // Create resource name string, used below
     napi_value asyncResourceName;
-    status = napi_create_string_utf8(env, "pcan_callback",
-				     NAPI_AUTO_LENGTH, &asyncResourceName);
+    status = napi_create_string_utf8(env, "pcanCallback",
+    				     NAPI_AUTO_LENGTH, &asyncResourceName);
     assert(status == napi_ok);
 
     // Create thread-safe function to use as a callback
     status = napi_create_threadsafe_function(env,
-					     argv[1],
-					     0, // async_resource
-					     asyncResourceName,
-					     0, // max_queue_size
-					     1, // initial_thread_count
-					     0, // thread_finalize_data
-					     0, // thread_finalize_cb
-					     0, // context
-					     0, // call_js_cb
-					     &pcan_callback); // Local variable
+    					     argv[1], // func
+    					     0, // async_resource
+    					     asyncResourceName,
+    					     0, // max_queue_size
+    					     1, // initial_thread_count
+    					     0, // thread_finalize_data
+					     pcan_CAN_EventFinalize,
+    					     0, // context
+    					     0, // call_js_cb
+    					     &pcanCallback); // result
     assert(status == napi_ok);
 
     // Enable CAN Bus receive event
-    int pcanStatus;
+    int pcanStatus = PCAN_ERROR_UNKNOWN;
     pcanStatus = pcanEventEnable(pcanChannel, pcan_CAN_EventCallback);
 
     // Print result to console
@@ -1221,7 +1226,7 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
 
-    /// Get callback info and argument list
+    // Get callback info and argument list
     size_t argc = CAN_DISABLEEVENT_ARGC;
     napi_value argv[CAN_DISABLEEVENT_ARGC];
 
@@ -1240,7 +1245,7 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     // Disable CAN Bus receive event
-    int pcanStatus;
+    int pcanStatus = PCAN_ERROR_UNKNOWN;
     pcanStatus = pcanEventDisable(pcanChannel);
 
     // Print result to console
@@ -1255,6 +1260,12 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
 			 "pcan_CAN_DisableEvent");
 	return 0;
     }
+
+    // Try to release the threadsafe function
+    status = napi_unref_threadsafe_function(env, pcanCallback);
+    assert(status == napi_ok);
+    status = napi_release_threadsafe_function(pcanCallback, napi_tsfn_abort);
+    assert(status == napi_ok);
 
     // Create a N-API value for the result and return it
     napi_value result;
