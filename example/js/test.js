@@ -1,18 +1,7 @@
-const events = require('events');
 const Can = require('../..');
 
-
 let can = new Can({
-  canRate: 500000,
-  filters: [
-    //{ext: true, id: '00000081 000000F8'},
-    //{ext: true, code: 0x00000081, mask: 0x000000F8},
-    //{ext: true, code: 0x000000E0, mask: 0x0000001F}
-    //{ext: true, id: '10EF0000 10EFFFFF'},
-    //{ext: true, id: '10ED0000 10EE0000'},
-    //{ext: true, code: 0x10EF0000, mask: 0xFFFF0000},
-    {ext: true, id: '10EE0000 10EFFFFF'}
-  ]
+  canRate: 250000,
 });
 
 can.list()
@@ -24,9 +13,11 @@ can.list()
 	process.exit(1);
       });
   })
-  // .then(() => {
-  //   can.close();
-  // })
+  .then(() => {
+    can.write({ id: 0x10EF8001,
+                ext: true,
+                buf: Buffer.from([0x45, 0x00, 0x00, 0x04, 0x00, 0x00]) });
+  })
   .catch((err) => {
     console.error(err);
     can.close();
@@ -45,3 +36,4 @@ can.on('data', function(msg) {
     }
   }));
 });
+
