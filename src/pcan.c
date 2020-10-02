@@ -112,10 +112,15 @@ void pcan_CAN_EventCallback(int channel)
 }
 
 
+
+
 void pcan_CAN_EventFinalize(napi_env env, void* finalize_data, void* finalize_hint)
 {
+#ifdef PCAN_DEBUG
     printf("pcan_CAN_EventFinalize\n");
+#endif
 }
+
 
 
 

@@ -76,6 +76,16 @@ void pcan_CAN_EventCallback(int channel);
 napi_value Init(napi_env env, napi_value exports);
 #endif
 
+
+// Dummy finalize callback for the threadsafe function used by
+// pcan_CAN_EventCallback
+#ifndef PCAN_WIN32_ONLY
+void pcan_CAN_EventFinalize(napi_env env, void* finalize_data, void* finalize_hint);
+#endif
+
+
+
+
 // ----------------------------------- // -----------------------------------
 // Public functions
 
@@ -290,6 +300,8 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info);
 #ifndef PCAN_WIN32_ONLY
 napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info);
 #endif
+
+
 
 #endif /* _PCAN_H_ */
 
