@@ -11,10 +11,9 @@ let can = new Can({
     //{ext: true, id: '10EF0000 10EFFFFF'},
     //{ext: true, id: '10ED0000 10EE0000'},
     //{ext: true, code: 0x10EF0000, mask: 0xFFFF0000},
-    {ext: true, id: '01EE0000 01EFFFFF'}
+    {ext: true, id: '10EE0000 10EFFFFF'}
   ]
 });
-
 
 can.list()
   .then((ports) => {
@@ -25,11 +24,15 @@ can.list()
 	process.exit(1);
       });
   })
+  // .then(() => {
+  //   can.close();
+  // })
   .catch((err) => {
     console.error(err);
     can.close();
     process.exit(1);
   });
+
 
 can.on('data', function(msg) {
   console.log(JSON.stringify(msg, (key, value) => {
@@ -42,4 +45,3 @@ can.on('data', function(msg) {
     }
   }));
 });
-
