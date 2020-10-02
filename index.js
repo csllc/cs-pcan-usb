@@ -89,59 +89,68 @@ module.exports = class PcanUsb extends Duplex {
 
   close() {
     let me = this;
-    // Remove listeners
-    me.removeAllListeners();
 
-    // Try to close stream
-    me.emit('close');
+    return new Promise(function(resolve, reject) {
+      // Remove listeners
+      me.removeAllListeners();
 
-    if (this.isOpen()) {
-      try {
-	pcan.DisableEvent(me.port);
-	pcan.Reset(me.port);
-	pcan.Uninitialize(me.port);
-      } catch (err) {
-	me.emit('error', err);
-	console.error(err);
+      if (me.isOpen()) {
+	  pcan.DisableEvent(me.port);
+	  pcan.Reset(me.port);
+	  pcan.Uninitialize(me.port);
+
       }
-    }
-    
-    this.port = null;
-    this.isReady = false;
-    this.push(null);
+      // Close stream
+      me.emit('close');
+      resolve();
+
+    })
+    .then(function() {
+      me.port = null;
+      me.isReady = false;
+      me.push(null);
+    })
+    .catch(function(err) {
+      me.emit('error', err);
+      throw new Error(err);
+    });
   }
 
   write(msg) {
     let me = this;
     
-    if (msg.buf.length <= 8) {
-      let tpcan_buffer = tpcan.toTPCANMsg(msg);
-      // Write message to bus
-      try {
+    return new Promise(function(resolve, reject) {
+      if (msg.buf.length <= 8) {
+	let tpcan_buffer = tpcan.toTPCANMsg(msg);
+	// Write message to bus
 	pcan.Write(me.port, tpcan_buffer);
 	me.emit('write', msg);
-      } catch (err) {
-	console.error(err);
-	me.emit('error');
+	// If loopback is enabled, push message back into receive stream
+	if (me.options.loopback) {
+	  me.push(tpcan.toMsg(tpcan_buffer));
+	}
+	resolve();
+      } else {
+	throw new Error("Tried to send invalid CAN data");
       }
-      // If loopback is enabled, push message back into receive stream
-      if (me.options.loopback) {
-	me.push(tpcan.toMsg(tpcan_buffer));
-      }
-    } else {
-      throw new Error("Tried to send invalid CAN data");
-    }
+    })
+      .catch(function(err) {
+	me.emit('error', err);
+	throw new Error(err);
+      });
   }
 
   status() {
     let me = this;
 
-    try {
-      return pcan.Status(me.port);
-    } catch (err) {
-      me.emit('error', err);
-      console.error(err);
-    }
+    return new Promise(function(resolve, reject) {
+      let status = pcan.Status(me.port);
+      resolve(status);
+    })
+      .catch(function(err) {
+	me.emit('error', err);
+	throw new Error(err);
+      });
   }
 
   // Required function for cs-modbus GenericConnection
