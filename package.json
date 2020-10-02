@@ -8,6 +8,7 @@
     "@csllc/j1939": "^1.0.0",
     "bindings": "~1.2.1",
     "can-usb-com": "^4.0.0",
+    "eslint": "^7.10.0",
     "stream": "0.0.2"
   },
   "devDependencies": {
