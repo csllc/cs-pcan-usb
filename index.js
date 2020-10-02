@@ -8,9 +8,9 @@ const tpcan = require('./lib/tpcan.js');
 const DEFAULT_TIMEOUT = 2000;
 
 const DEFAULT_OPTIONS = {
-  canRate: 500000,
+  canRate: 250000,
   filters: [],
-  loopback: false, // TODO: Implement this
+  loopback: false,
 };
 
 module.exports = class PcanUsb extends Duplex {
@@ -37,16 +37,17 @@ module.exports = class PcanUsb extends Duplex {
       resolve(pcan.ChannelInfo());
     })
       .then(function(channels) {
-	// For compatibility, create a new property 'path' that is the
-	// identifier for the CAN device in the system and can be passed
-	// to the open() method
-	for (var idx in channels) {
-	  channels[idx].path = channels[idx].channel_handle;
-	}
-	return channels;
+	    // For compatibility, create a new property 'path' that is the
+	    // identifier for the CAN device in the system and can be passed
+	    // to the open() method
+	    for (var idx in channels) {
+	      channels[idx].path = channels[idx].channel_handle;
+	    }
+	    return channels;
       })
       .catch(function(err) {
-	throw new Error(err);
+	    me.emit('error', err);
+	    throw new Error(err);
       });
   };
 
@@ -64,26 +65,26 @@ module.exports = class PcanUsb extends Duplex {
       resolve();
     })
       .then(function() {
-	// Close event handler
-	me.on('close', function() {
-	  me.close();
-	});
+	    // Close event handler
+	    me.on('close', function() {
+	      me.close();
+	    });
 
-	// Data receive event handler
-	me.on('_data', me._onData.bind(me));
-     
-	// Enable data event
-	pcan.EnableEvent(port, function() {
-	  me.emit('_data');
-	});
+	    // Data receive event handler
+	    me.on('_data', me._onData.bind(me));
+        
+	    // Enable data event
+	    pcan.EnableEvent(port, function() {
+	      me.emit('_data');
+	    });
 
-	// Enable busoff auto-reset
-	pcan.SetValue(port, 0x07, Buffer.from([0x01]));
+	    // Enable busoff auto-reset
+	    pcan.SetValue(port, 0x07, Buffer.from([0x01]));
 
       })
       .catch(function(err) {
-	me.emit('error', err);
-	throw new Error(err);
+	    me.emit('error', err);
+	    throw new Error(err);
       });
   };
 
@@ -95,9 +96,9 @@ module.exports = class PcanUsb extends Duplex {
       me.removeAllListeners();
 
       if (me.isOpen()) {
-	  pcan.DisableEvent(me.port);
-	  pcan.Reset(me.port);
-	  pcan.Uninitialize(me.port);
+	    pcan.DisableEvent(me.port);
+	    pcan.Reset(me.port);
+	    pcan.Uninitialize(me.port);
 
       }
       // Close stream
@@ -105,15 +106,15 @@ module.exports = class PcanUsb extends Duplex {
       resolve();
 
     })
-    .then(function() {
-      me.port = null;
-      me.isReady = false;
-      me.push(null);
-    })
-    .catch(function(err) {
-      me.emit('error', err);
-      throw new Error(err);
-    });
+      .then(function() {
+        me.port = null;
+        me.isReady = false;
+        me.push(null);
+      })
+      .catch(function(err) {
+        me.emit('error', err);
+        throw new Error(err);
+      });
   }
 
   write(msg) {
@@ -121,22 +122,22 @@ module.exports = class PcanUsb extends Duplex {
     
     return new Promise(function(resolve, reject) {
       if (msg.buf.length <= 8) {
-	let tpcan_buffer = tpcan.toTPCANMsg(msg);
-	// Write message to bus
-	pcan.Write(me.port, tpcan_buffer);
-	me.emit('write', msg);
-	// If loopback is enabled, push message back into receive stream
-	if (me.options.loopback) {
-	  me.push(tpcan.toMsg(tpcan_buffer));
-	}
-	resolve();
+	    let tpcan_buffer = tpcan.toTPCANMsg(msg);
+	    // Write message to bus
+	    pcan.Write(me.port, tpcan_buffer);
+	    me.emit('write', msg);
+	    // If loopback is enabled, push message back into receive stream
+	    if (me.options.loopback) {
+	      me.push(tpcan.toMsg(tpcan_buffer));
+	    }
+	    resolve();
       } else {
-	throw new Error("Tried to send invalid CAN data");
+	    throw new Error("Tried to send invalid CAN data");
       }
     })
       .catch(function(err) {
-	me.emit('error', err);
-	throw new Error(err);
+	    me.emit('error', err);
+	    throw new Error(err);
       });
   }
 
@@ -148,8 +149,8 @@ module.exports = class PcanUsb extends Duplex {
       resolve(status);
     })
       .catch(function(err) {
-	me.emit('error', err);
-	throw new Error(err);
+	    me.emit('error', err);
+	    throw new Error(err);
       });
   }
 
@@ -171,15 +172,15 @@ module.exports = class PcanUsb extends Duplex {
       me.push(tpcan.toMsg(read_obj.message)) // Emits 'data' event
     } catch(err) {
       if (err.code != "PCAN_ERROR_QRCVEMPTY") {
-	console.error(err.code);
+	    console.error(err.code);
       }
     }
   }
 
-  // required functions for a readable stream, we don't need to do anything
+  // Required for a readable stream; we don't need to do anything
   _read() {}
 
-  // required functions for a writable stream, we don't need to do anything
+  // Required for a writable stream; we don't need to do anything
   _write() {}
 
   _configure() {
@@ -192,36 +193,35 @@ module.exports = class PcanUsb extends Duplex {
       let ext_option = me.options.filters[0].ext;
 
       for (var i in me.options.filters) {
-	if (me.options.filters[i].ext != ext_option) {
-	  throw new Error("PCAN-USB does not support mixing extended and standard filters.");
-	}
+	    if (me.options.filters[i].ext != ext_option) {
+	      throw new Error("PCAN-USB does not support mixing extended and standard filters.");
+	    }
       }
       
       for (var i in me.options.filters) {
-	if ((me.options.filters[i].code) && (me.options.filters[i].mask)) {
-	  if (me.options.filters[i].ext) {
-	    pcan.AcceptanceFilter29Bit(me.port, me.options.filters[i].code,
-					   me.options.filters[i].mask);
-	    // TODO: Will this thrown exceptions as expected?
-	  } else {
-	    pcan.AcceptanceFilter11Bit(me.port, me.options.filters[i].code,
-					   me.options.filters[i].mask);
-	  }
-	} else if ((me.options.filters[i].fromID) && (me.options.filters[i].toID)){
+	    if ((me.options.filters[i].code) && (me.options.filters[i].mask)) {
+	      if (me.options.filters[i].ext) {
+	        pcan.AcceptanceFilter29Bit(me.port, me.options.filters[i].code,
+					                   me.options.filters[i].mask);
+	      } else {
+	        pcan.AcceptanceFilter11Bit(me.port, me.options.filters[i].code,
+					                   me.options.filters[i].mask);
+	      }
+	    } else if ((me.options.filters[i].fromID) && (me.options.filters[i].toID)){
 
-	  pcan.FilterMessages(me.port, fromID, toID, 0x02);
+	      pcan.FilterMessages(me.port, fromID, toID, 0x02);
 
-	} else if (me.options.filters[i].id) {
+	    } else if (me.options.filters[i].id) {
 
-	  // Split start/stop range and convert them to acceptance code + mask
-	  let fromID = parseInt(me.options.filters[i].id.split(' ')[0], 16);
-	  let toID = parseInt(me.options.filters[i].id.split(' ')[1], 16);
+	      // Split start/stop range and convert them to acceptance code + mask
+	      let fromID = parseInt(me.options.filters[i].id.split(' ')[0], 16);
+	      let toID = parseInt(me.options.filters[i].id.split(' ')[1], 16);
 
-	  pcan.FilterMessages(me.port, fromID, toID, 0x02);
+	      pcan.FilterMessages(me.port, fromID, toID, 0x02);
 
-	} else {
-	  throw new Error("Unknown or unspecified filter format.");
-	}
+	    } else {
+	      throw new Error("Unknown or unspecified filter format.");
+	    }
       }
     }
   }
