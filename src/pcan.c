@@ -65,27 +65,27 @@ napi_value Init(napi_env env, napi_value exports)
     // Build array of property descriptors
     // If modifying this list, remember to update descriptors_len, above 
     napi_property_descriptor descriptors[descriptors_len] = {
-	// PCAN-Basic functions
-	DECLARE_NAPI_METHOD("Initialize", pcan_CAN_Initialize),
-	DECLARE_NAPI_METHOD("InitializeFD", pcan_CAN_InitializeFD),
-	DECLARE_NAPI_METHOD("Uninitialize", pcan_CAN_Uninitialize),
-	DECLARE_NAPI_METHOD("Reset", pcan_CAN_Reset),
-	DECLARE_NAPI_METHOD("GetStatus", pcan_CAN_GetStatus),
-	DECLARE_NAPI_METHOD("Read", pcan_CAN_Read),
-	DECLARE_NAPI_METHOD("ReadFD", pcan_CAN_ReadFD),
-	DECLARE_NAPI_METHOD("Write", pcan_CAN_Write),
-	DECLARE_NAPI_METHOD("WriteFD", pcan_CAN_Write),
-	DECLARE_NAPI_METHOD("GetValue", pcan_CAN_GetValue),
-	DECLARE_NAPI_METHOD("SetValue", pcan_CAN_SetValue),
-	DECLARE_NAPI_METHOD("FilterMessages", pcan_CAN_FilterMessages),
-	DECLARE_NAPI_METHOD("GetErrorText", pcan_CAN_GetErrorText),
-	// Additional functions
-	DECLARE_NAPI_METHOD("EnableEvent", pcan_CAN_EnableEvent),
-	DECLARE_NAPI_METHOD("DisableEvent", pcan_CAN_DisableEvent),
-	DECLARE_NAPI_METHOD("AcceptanceFilter29Bit", pcan_CAN_AcceptanceFilter29Bit),
-	DECLARE_NAPI_METHOD("AcceptanceFilter11Bit", pcan_CAN_AcceptanceFilter11Bit),
-	DECLARE_NAPI_METHOD("ChannelInfo", pcan_CAN_ChannelInfo),
-	DECLARE_NAPI_METHOD("TranslateBaud", pcan_CAN_TranslateBaud),
+        // PCAN-Basic functions
+        DECLARE_NAPI_METHOD("Initialize", pcan_CAN_Initialize),
+        DECLARE_NAPI_METHOD("InitializeFD", pcan_CAN_InitializeFD),
+        DECLARE_NAPI_METHOD("Uninitialize", pcan_CAN_Uninitialize),
+        DECLARE_NAPI_METHOD("Reset", pcan_CAN_Reset),
+        DECLARE_NAPI_METHOD("GetStatus", pcan_CAN_GetStatus),
+        DECLARE_NAPI_METHOD("Read", pcan_CAN_Read),
+        DECLARE_NAPI_METHOD("ReadFD", pcan_CAN_ReadFD),
+        DECLARE_NAPI_METHOD("Write", pcan_CAN_Write),
+        DECLARE_NAPI_METHOD("WriteFD", pcan_CAN_Write),
+        DECLARE_NAPI_METHOD("GetValue", pcan_CAN_GetValue),
+        DECLARE_NAPI_METHOD("SetValue", pcan_CAN_SetValue),
+        DECLARE_NAPI_METHOD("FilterMessages", pcan_CAN_FilterMessages),
+        DECLARE_NAPI_METHOD("GetErrorText", pcan_CAN_GetErrorText),
+        // Additional functions
+        DECLARE_NAPI_METHOD("EnableEvent", pcan_CAN_EnableEvent),
+        DECLARE_NAPI_METHOD("DisableEvent", pcan_CAN_DisableEvent),
+        DECLARE_NAPI_METHOD("AcceptanceFilter29Bit", pcan_CAN_AcceptanceFilter29Bit),
+        DECLARE_NAPI_METHOD("AcceptanceFilter11Bit", pcan_CAN_AcceptanceFilter11Bit),
+        DECLARE_NAPI_METHOD("ChannelInfo", pcan_CAN_ChannelInfo),
+        DECLARE_NAPI_METHOD("TranslateBaud", pcan_CAN_TranslateBaud),
     };
 
     status = napi_define_properties(env, exports, descriptors_len, descriptors);
@@ -136,10 +136,10 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
 
     if (argc != CAN_INITIALIZE_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments."
-			      "This implementation of CAN_Initialize accepts Channel and "
-			      "Btr0Btr1.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments."
+                              "This implementation of CAN_Initialize accepts Channel and "
+                              "Btr0Btr1.");
+        return 0;
     }
 
     // Retreive arguments
@@ -158,20 +158,20 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
     // Print results to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_Initialize:\n"
-	   "  pcanStatus = 0x%02X (%s)\n"
-	   "  pcanChannel = 0x%02X\n"
-	   "  pcanBtr0Btr1 = 0x%02X\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcanBtr0Btr1);
+           "  pcanStatus = 0x%02X (%s)\n"
+           "  pcanChannel = 0x%02X\n"
+           "  pcanBtr0Btr1 = 0x%02X\n",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcanBtr0Btr1);
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_Initialize: Error at CAN_Initialize.");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_Initialize: Error at CAN_Initialize.");
+        return 0;
     }
     
     // Create an N-API value for the result and return it
@@ -198,8 +198,8 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
 
     if (argc != CAN_INITIALIZEFD_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retreive arguments
@@ -210,7 +210,7 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
     char pcanBitrateFD[256] = { 0 };
     size_t pcanBitrateFDResult = 0;
     status = napi_get_value_string_utf8(env, argv[1], pcanBitrateFD,
-					sizeof(pcanBitrateFD), &pcanBitrateFDResult);
+                                        sizeof(pcanBitrateFD), &pcanBitrateFDResult);
     assert(status == napi_ok);
 
     // Initialize CAN bus, with flexible data rate capabilities
@@ -220,20 +220,20 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
     // Print results to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_InitializeFD:\n"
-	   "  pcanStatus = 0x%02X (%s)\n"
-	   "  pcanChannel = 0x%02X\n"
-	   "  pcanBitrateFD = \"%s\"\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcanBitrateFD);
+           "  pcanStatus = 0x%02X (%s)\n"
+           "  pcanChannel = 0x%02X\n"
+           "  pcanBitrateFD = \"%s\"\n",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcanBitrateFD);
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_InitializeFD: Error at CAN_InitializeFD.");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_InitializeFD: Error at CAN_InitializeFD.");
+        return 0;
     }
 
     // Create N-API value for the result and return it
@@ -260,8 +260,8 @@ napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info)
 
     if (argc != CAN_UNINITIALIZE_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -276,15 +276,15 @@ napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_Uninitialize: 0x%02X (%s)\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus));
+           pcanStatus, pcanStatusLookup(pcanStatus));
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_Uninitialize: Error at CAN_Uninitialize.");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_Uninitialize: Error at CAN_Uninitialize.");
+        return 0;
     }
 
     // Create a N-API value for the result and return it
@@ -311,8 +311,8 @@ napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info)
 
     if (argc != CAN_RESET_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -327,15 +327,15 @@ napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_Reset: 0x%02X (%s)\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus));
+           pcanStatus, pcanStatusLookup(pcanStatus));
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_Reset: Error at CAN_Reset.");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_Reset: Error at CAN_Reset.");
+        return 0;
     }
 
     // Create a N-API value for the result and return it
@@ -362,8 +362,8 @@ napi_value pcan_CAN_GetStatus(napi_env env, napi_callback_info info)
 
     if (argc != CAN_GETSTATUS_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -378,7 +378,7 @@ napi_value pcan_CAN_GetStatus(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_GetStatus: 0x%02X (%s)\n",
-	   pcan_can_status, pcanStatusLookup(pcan_can_status));
+           pcan_can_status, pcanStatusLookup(pcan_can_status));
 #endif
 
     // Create a N-API value for the status and return it
@@ -405,8 +405,8 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
 
     if (argc != CAN_READ_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -431,9 +431,9 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_Read");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_Read");
+        return 0;
     }
 
     // Create parent objects for read data
@@ -469,8 +469,8 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     status = napi_create_buffer_copy(env, msg.LEN, (void*)&(msg.DATA),
-				     (void*)&pcanMessageBufferDataResult,
-				     &pcanMessageBufferData);
+                                     (void*)&pcanMessageBufferDataResult,
+                                     &pcanMessageBufferData);
     assert(status == napi_ok);
     status = napi_set_named_property(env, pcanMessageBuffer, "data", pcanMessageBufferData);
     assert(status == napi_ok);
@@ -483,18 +483,18 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info)
     status = napi_create_uint32(env, timestamp.millis, &pcanTimestampBufferMillis);
     assert(status == napi_ok);
     status = napi_set_named_property(env, pcanTimestampBuffer, "millis",
-				     pcanTimestampBufferMillis);
+                                     pcanTimestampBufferMillis);
 
     status = napi_create_uint32(env, timestamp.millis_overflow,
-				&pcanTimestampBufferMillisOverflow);
+                                &pcanTimestampBufferMillisOverflow);
     assert(status == napi_ok);
     status = napi_set_named_property(env, pcanTimestampBuffer, "millis_overflow",
-				     pcanTimestampBufferMillisOverflow);
+                                     pcanTimestampBufferMillisOverflow);
 
     status = napi_create_uint32(env, timestamp.micros, &pcanTimestampBufferMicros);
     assert(status == napi_ok);
     status = napi_set_named_property(env, pcanTimestampBuffer, "micros",
-				     pcanTimestampBufferMicros);
+                                     pcanTimestampBufferMicros);
 
     // Create a N-API value for the complete read data and return it
     napi_value pcanReadData;
@@ -525,8 +525,8 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
 
     if (argc != CAN_READFD_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -545,7 +545,7 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
     // Dump results to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_ReadFD: 0x%02X (%s)\n", pcanStatus,
-	   pcanStatusLookup(pcanStatus));
+           pcanStatusLookup(pcanStatus));
     pcanDumpMsgFD(&msg);
     pcanDumpTimestampFD(timestamp);
 #endif
@@ -553,9 +553,9 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_ReadFD");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_ReadFD");
+        return 0;
     }
 
     // Create parent objects for read data
@@ -632,8 +632,8 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
 
     if (argc != CAN_WRITE_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -649,8 +649,8 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
 
     if (pcanMessageBufferType != napi_object)
     {
-	napi_throw_type_error(env, 0, "Argument 1 (MessageBuffer) is not an object.");
-	return 0;
+        napi_throw_type_error(env, 0, "Argument 1 (MessageBuffer) is not an object.");
+        return 0;
     }
 
     // Copy message contents from N-API object to TPCANMsg struct
@@ -684,8 +684,8 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
 
     if (msgTmpLen != msg.LEN)
     {
-	napi_throw_error(env, 0, "Mismatch between LEN and actual data buffer length");
-	return 0;
+        napi_throw_error(env, 0, "Mismatch between LEN and actual data buffer length");
+        return 0;
     }
 
     memcpy(msg.DATA, msgTmpData, msg.LEN);
@@ -703,9 +703,9 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_Write");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_Write");
+        return 0;
     }
 
     // Create a N-API value for the result and return it
@@ -732,8 +732,8 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
 
     if (argc != CAN_WRITEFD_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -749,8 +749,8 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
 
     if (pcanMessageBufferType != napi_object)
     {
-	napi_throw_type_error(env, 0, "Argument 1 (MessageBufferFD) is not an object.");
-	return 0;
+        napi_throw_type_error(env, 0, "Argument 1 (MessageBufferFD) is not an object.");
+        return 0;
     }
 
     // Copy message contents from N-API object to TPCANMsgFD struct
@@ -784,8 +784,8 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
 
     if (msgTmpLen != pcanDLCDecode(msg.DLC))
     {
-	napi_throw_error(env, 0, "Mismatch between DLC and actual data buffer length");
-	return 0;
+        napi_throw_error(env, 0, "Mismatch between DLC and actual data buffer length");
+        return 0;
     }
 
     memcpy(msg.DATA, msgTmpData, pcanDLCDecode(msg.DLC));
@@ -803,9 +803,9 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_WriteFD");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_WriteFD");
+        return 0;
     }
 
     // Create a N-API value for the result and return it
@@ -832,10 +832,10 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 
     if (argc != CAN_GETVALUE_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
-			      "The N-API implementation of CAN_GetValue accepts Channel, "
-			      "Parameter, and Buffer.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
+                              "The N-API implementation of CAN_GetValue accepts Channel, "
+                              "Parameter, and Buffer.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -856,8 +856,8 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 
     if (pcanBufferType != napi_object)
     {
-	napi_throw_type_error(env, 0, "Argument 2 (Buffer) is not an object.");
-	return 0;
+        napi_throw_type_error(env, 0, "Argument 2 (Buffer) is not an object.");
+        return 0;
     }
 
     // Argument 3 - BufferLength (obtained from pcanBuffer)
@@ -873,15 +873,15 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_GetValue: \n"
-	   "  pcanStatus       = 0x%02X (%s)\n"
-	   "  pcanChannel      = 0x%02X\n"
-	   "  pcanParameter    = 0x%02X (%s)\n"
-	   "  pcanBufferLength = 0x%02zX\n"
-	   "  pcanBuffer       = ",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcanParameter, pcanParameterLookup(pcanParameter),
-	   pcanBufferLength);
+           "  pcanStatus       = 0x%02X (%s)\n"
+           "  pcanChannel      = 0x%02X\n"
+           "  pcanParameter    = 0x%02X (%s)\n"
+           "  pcanBufferLength = 0x%02zX\n"
+           "  pcanBuffer       = ",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcanParameter, pcanParameterLookup(pcanParameter),
+           pcanBufferLength);
     pcanDumpBuffer(pcanBuffer, pcanBufferLength);
     printf("\n");
 #endif
@@ -889,9 +889,9 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_GetValue");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_GetValue");
+        return 0;
     }
 
     // Put value into the buffer object passed from N-API
@@ -923,10 +923,10 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
 
     if (argc != CAN_SETVALUE_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
-			      "The N-API implementation of CAN_SetValue accepts Channel, "
-			      "Parameter, and Buffer.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments. \n"
+                              "The N-API implementation of CAN_SetValue accepts Channel, "
+                              "Parameter, and Buffer.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -947,8 +947,8 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
 
     if (pcanBufferType != napi_object)
     {
-	napi_throw_type_error(env, 0, "Argument 2 (Buffer) is not an object.");
-	return 0;
+        napi_throw_type_error(env, 0, "Argument 2 (Buffer) is not an object.");
+        return 0;
     }
 
     // Argument 3 - BufferLength (obtained from pcanBuffer)
@@ -965,15 +965,15 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_SetValue: \n"
-	   "  pcanStatus       = 0x%02X (%s)\n"
-	   "  pcanChannel      = 0x%02X\n"
-	   "  pcanParameter    = 0x%02X (%s)\n"
-	   "  pcanBufferLength = 0x%02zX\n"
-	   "  pcanBuffer       = ",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcanParameter, pcanParameterLookup(pcanParameter),
-	   pcanBufferLength);
+           "  pcanStatus       = 0x%02X (%s)\n"
+           "  pcanChannel      = 0x%02X\n"
+           "  pcanParameter    = 0x%02X (%s)\n"
+           "  pcanBufferLength = 0x%02zX\n"
+           "  pcanBuffer       = ",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcanParameter, pcanParameterLookup(pcanParameter),
+           pcanBufferLength);
     pcanDumpBuffer(pcanBuffer, pcanBufferLength);
     printf("\n");
 #endif
@@ -981,9 +981,9 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_SetValue");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_SetValue");
+        return 0;
     }
 
     // Create an N-API value for the result and return it
@@ -1010,8 +1010,8 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
 
     if (argc != CAN_FILTERMESSAGES_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -1042,24 +1042,24 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_FilterMessages: \n"
-	   "  pcanStatus  = 0x%02X (%s)\n"
-	   "  pcanChannel = 0x%02X\n"
-	   "  pcanFromID  = 0x%08X\n"
-	   "  pcanToID    = 0x%08X\n"
-	   "  pcanMode    = 0x%02X\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcanFromID,
-	   pcanToID,
-	   pcanMode);
+           "  pcanStatus  = 0x%02X (%s)\n"
+           "  pcanChannel = 0x%02X\n"
+           "  pcanFromID  = 0x%08X\n"
+           "  pcanToID    = 0x%08X\n"
+           "  pcanMode    = 0x%02X\n",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcanFromID,
+           pcanToID,
+           pcanMode);
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_FilterMessages");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_FilterMessages");
+        return 0;
     }
 
     // Create an N-API value for the result and return it
@@ -1086,8 +1086,8 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
 
     if (argc != CAN_GETERRORTEXT_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -1111,22 +1111,22 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info)
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_GetErrorText:\n"
-	   "  pcanStatus    = %i (%s)\n"
-	   "  pcanError     = %i\n"
-	   "  pcanLanguage  = %i\n"
-	   "  pcanBuffer    = \"%s\"\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanError,
-	   pcanLanguage,
-	   pcanBuffer);
+           "  pcanStatus    = %i (%s)\n"
+           "  pcanError     = %i\n"
+           "  pcanLanguage  = %i\n"
+           "  pcanBuffer    = \"%s\"\n",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanError,
+           pcanLanguage,
+           pcanBuffer);
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_GetErrorText");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_GetErrorText");
+        return 0;
     }
 
     // Create an N-API value for the result and return it
@@ -1153,8 +1153,8 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
 
     if (argc != CAN_ENABLEEVENT_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -1170,28 +1170,28 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
 
     if (pcanCallbackType != napi_function)
     {
-	napi_throw_type_error(env, 0, "Argument 1 (Callback) is not a function.");
-	return 0;
+        napi_throw_type_error(env, 0, "Argument 1 (Callback) is not a function.");
+        return 0;
     }
 
     // Create resource name string, used below
     napi_value asyncResourceName;
     status = napi_create_string_utf8(env, "pcanCallback",
-    				     NAPI_AUTO_LENGTH, &asyncResourceName);
+                                     NAPI_AUTO_LENGTH, &asyncResourceName);
     assert(status == napi_ok);
 
     // Create thread-safe function to use as a callback
     status = napi_create_threadsafe_function(env,
-    					     argv[1], // func
-    					     0, // async_resource
-    					     asyncResourceName,
-    					     0, // max_queue_size
-    					     1, // initial_thread_count
-    					     0, // thread_finalize_data
-					     pcan_CAN_EventFinalize,
-    					     0, // context
-    					     0, // call_js_cb
-    					     &pcanCallback); // result
+                                             argv[1], // func
+                                             0, // async_resource
+                                             asyncResourceName,
+                                             0, // max_queue_size
+                                             1, // initial_thread_count
+                                             0, // thread_finalize_data
+                                             pcan_CAN_EventFinalize,
+                                             0, // context
+                                             0, // call_js_cb
+                                             &pcanCallback); // result
     assert(status == napi_ok);
 
     // Enable CAN Bus receive event
@@ -1206,9 +1206,9 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_EnableEvent");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_EnableEvent");
+        return 0;
     }
 
     // Create a N-API value for the result and return it
@@ -1235,8 +1235,8 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
 
     if (argc != CAN_DISABLEEVENT_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -1256,9 +1256,9 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_DisableEvent");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_DisableEvent");
+        return 0;
     }
 
     // Try to release the threadsafe function
@@ -1291,8 +1291,8 @@ napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
 
     if (argc != CAN_ACCEPTANCEFILTER11BIT_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -1321,29 +1321,29 @@ napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
     // Set the acceptance filter through the API
     TPCANStatus pcanStatus = PCAN_ERROR_UNKNOWN;
     pcanStatus = CAN_SetValue(pcanChannel, PCAN_ACCEPTANCE_FILTER_11BIT,
-			       &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
+                               &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
 
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_AcceptanceFilter11Bit:\n"
-	   "  pcanStatus            = 0x%02X (%s)\n"
-	   "  pcanChannel           = 0x%02X\n"
-	   "  pcan_AcceptanceCode   = 0x%08X\n"
-	   "  pcan_AcceptanceMask   = 0x%08X\n"
-	   "  pcan_AcceptanceFilter = 0x%016llX\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcan_AcceptanceCode,
-	   pcan_AcceptanceMask,
-	   pcan_AcceptanceFilter);
+           "  pcanStatus            = 0x%02X (%s)\n"
+           "  pcanChannel           = 0x%02X\n"
+           "  pcan_AcceptanceCode   = 0x%08X\n"
+           "  pcan_AcceptanceMask   = 0x%08X\n"
+           "  pcan_AcceptanceFilter = 0x%016llX\n",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcan_AcceptanceCode,
+           pcan_AcceptanceMask,
+           pcan_AcceptanceFilter);
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_AcceptanceFilter11Bit");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_AcceptanceFilter11Bit");
+        return 0;
     }
 
     // Create an N-API value for the result and return it
@@ -1370,8 +1370,8 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 
     if (argc != CAN_ACCEPTANCEFILTER29BIT_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retrieve arguments
@@ -1400,29 +1400,29 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
     // Set the acceptance filter through the API
     TPCANStatus pcanStatus = PCAN_ERROR_UNKNOWN;
     pcanStatus = CAN_SetValue(pcanChannel, PCAN_ACCEPTANCE_FILTER_29BIT,
-			       &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
+                               &pcan_AcceptanceFilter, sizeof(pcan_AcceptanceFilter));
 
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_AcceptanceFilter29Bit:\n"
-	   "  pcanStatus            = 0x%02X (%s)\n"
-	   "  pcanChannel           = 0x%02X\n"
-	   "  pcan_AcceptanceCode   = 0x%08X\n"
-	   "  pcan_AcceptanceMask   = 0x%08X\n"
-	   "  pcan_AcceptanceFilter = 0x%016llX\n",
-	   pcanStatus, pcanStatusLookup(pcanStatus),
-	   pcanChannel,
-	   pcan_AcceptanceCode,
-	   pcan_AcceptanceMask,
-	   pcan_AcceptanceFilter);
+           "  pcanStatus            = 0x%02X (%s)\n"
+           "  pcanChannel           = 0x%02X\n"
+           "  pcan_AcceptanceCode   = 0x%08X\n"
+           "  pcan_AcceptanceMask   = 0x%08X\n"
+           "  pcan_AcceptanceFilter = 0x%016llX\n",
+           pcanStatus, pcanStatusLookup(pcanStatus),
+           pcanChannel,
+           pcan_AcceptanceCode,
+           pcan_AcceptanceMask,
+           pcan_AcceptanceFilter);
 #endif
 
     // Throw error, if any
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_AcceptanceFilter29Bit");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_AcceptanceFilter29Bit");
+        return 0;
     }
 
     // Create an N-API value for the result and return it
@@ -1450,8 +1450,8 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 
     if (argc != CAN_CHANNELINFO_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Get channel count
@@ -1459,19 +1459,19 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
     int32_t pcanAttachedChannelsCount = 0;
 
     pcanStatus = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS_COUNT,
-			      &pcanAttachedChannelsCount, sizeof(pcanAttachedChannelsCount));
+                              &pcanAttachedChannelsCount, sizeof(pcanAttachedChannelsCount));
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS_COUNT).");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS_COUNT).");
+        return 0;
     }
     
     // Check that there are > 0 channels available
     if (pcanAttachedChannelsCount == 0)
     {
-	napi_throw_error(env, 0, "No PCAN channels available");
-	return 0;
+        napi_throw_error(env, 0, "No PCAN channels available");
+        return 0;
     }
 
 #ifdef PCAN_DEBUG
@@ -1487,27 +1487,27 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 
     if (pcanAttachedChannels == 0)
     {
-	napi_throw_error(env, 0, "Error allocating memory for TPCANChannelInformation.");
-	return 0;
+        napi_throw_error(env, 0, "Error allocating memory for TPCANChannelInformation.");
+        return 0;
     }
 
     ZeroMemory(pcanAttachedChannels, pcanAttachedChannels_sz);
 
     // Get channel list
     pcanStatus = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS,
-			      pcanAttachedChannels, pcanAttachedChannels_sz);
+                              pcanAttachedChannels, pcanAttachedChannels_sz);
     if (pcanStatus != PCAN_ERROR_OK)
     {
-	napi_throw_error(env, pcanStatusLookup(pcanStatus),
-			 "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS).");
-	return 0;
+        napi_throw_error(env, pcanStatusLookup(pcanStatus),
+                         "pcan_CAN_ChannelInfo: Error at CAN_GetValue(PCAN_ATTACHED_CHANNELS).");
+        return 0;
     }
 
     // Print result to console
 #ifdef PCAN_DEBUG
     for (i = 0; i < pcanAttachedChannelsCount; i++)
     {
-	pcanDumpChannelInfo(&(pcanAttachedChannels[i]));
+        pcanDumpChannelInfo(&(pcanAttachedChannels[i]));
     }
 #endif
 
@@ -1527,66 +1527,66 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
 
     for (i = 0; i < pcanAttachedChannelsCount; i++)
     {
-	// Create N-API object for array element
-	status = napi_create_object(env, &channelInfoElement);
+        // Create N-API object for array element
+        status = napi_create_object(env, &channelInfoElement);
 
-	// Assign properties
-	// - Channel handle
-	status = napi_create_uint32(env, pcanAttachedChannels[i].channel_handle,
-				   &channelInfoElementChannelHandle);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "channel_handle",
-					 channelInfoElementChannelHandle);
-	assert(status == napi_ok);
+        // Assign properties
+        // - Channel handle
+        status = napi_create_uint32(env, pcanAttachedChannels[i].channel_handle,
+                                   &channelInfoElementChannelHandle);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "channel_handle",
+                                         channelInfoElementChannelHandle);
+        assert(status == napi_ok);
 
-	// - Device type
-	status = napi_create_uint32(env, pcanAttachedChannels[i].device_type,
-				    &channelInfoElementDeviceType);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "device_type",
-					 channelInfoElementDeviceType);
-	assert(status == napi_ok);
+        // - Device type
+        status = napi_create_uint32(env, pcanAttachedChannels[i].device_type,
+                                    &channelInfoElementDeviceType);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "device_type",
+                                         channelInfoElementDeviceType);
+        assert(status == napi_ok);
 
-	// - Controller number
-	status = napi_create_uint32(env, pcanAttachedChannels[i].controller_number,
-				    &channelInfoElementControllerNumber);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "controller_number",
-					  channelInfoElementControllerNumber);
-	assert(status == napi_ok);
+        // - Controller number
+        status = napi_create_uint32(env, pcanAttachedChannels[i].controller_number,
+                                    &channelInfoElementControllerNumber);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "controller_number",
+                                          channelInfoElementControllerNumber);
+        assert(status == napi_ok);
 
-	// - Device features
-	status = napi_create_uint32(env, pcanAttachedChannels[i].device_features,
-				    &channelInfoElementDeviceFeatures);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "device_features",
-					  channelInfoElementDeviceFeatures);
-	assert(status == napi_ok);
-	
-	// - Device name
-	status = napi_create_string_utf8(env, pcanAttachedChannels[i].device_name,
-					 NAPI_AUTO_LENGTH, &channelInfoElementDeviceName);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "device_name",
-					  channelInfoElementDeviceName);
+        // - Device features
+        status = napi_create_uint32(env, pcanAttachedChannels[i].device_features,
+                                    &channelInfoElementDeviceFeatures);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "device_features",
+                                          channelInfoElementDeviceFeatures);
+        assert(status == napi_ok);
+        
+        // - Device name
+        status = napi_create_string_utf8(env, pcanAttachedChannels[i].device_name,
+                                         NAPI_AUTO_LENGTH, &channelInfoElementDeviceName);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "device_name",
+                                          channelInfoElementDeviceName);
 
-	// - Device ID
-	status = napi_create_uint32(env, pcanAttachedChannels[i].device_id,
-				    &channelInfoElementDeviceID);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "device_id",
-					  channelInfoElementDeviceID);
+        // - Device ID
+        status = napi_create_uint32(env, pcanAttachedChannels[i].device_id,
+                                    &channelInfoElementDeviceID);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "device_id",
+                                          channelInfoElementDeviceID);
 
-	// - Channel condition
-	status = napi_create_uint32(env, pcanAttachedChannels[i].channel_condition,
-				    &channelInfoElementChannelCondition);
-	assert(status == napi_ok);
-	status = napi_set_named_property(env, channelInfoElement, "channel_condition",
-					  channelInfoElementChannelCondition);
+        // - Channel condition
+        status = napi_create_uint32(env, pcanAttachedChannels[i].channel_condition,
+                                    &channelInfoElementChannelCondition);
+        assert(status == napi_ok);
+        status = napi_set_named_property(env, channelInfoElement, "channel_condition",
+                                          channelInfoElementChannelCondition);
 
-	// Add complete element to array
-	status = napi_set_element(env, channelInfo, i, channelInfoElement);
-	assert(status == napi_ok);
+        // Add complete element to array
+        status = napi_set_element(env, channelInfo, i, channelInfoElement);
+        assert(status == napi_ok);
     }
 
     // Free dynamically allocated memory
@@ -1612,8 +1612,8 @@ napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info)
 
     if (argc != CAN_TRANSLATEBAUD_ARGC)
     {
-	napi_throw_type_error(env, 0, "Incorrect number of arguments.");
-	return 0;
+        napi_throw_type_error(env, 0, "Incorrect number of arguments.");
+        return 0;
     }
 
     // Retreive arguments
@@ -1628,14 +1628,14 @@ napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info)
 
     if (baudAPI == 0)
     {
-	napi_throw_error(env, 0, "Unknown CAN baud specified.");
-	return 0;
+        napi_throw_error(env, 0, "Unknown CAN baud specified.");
+        return 0;
     }
 
     // Print result to console
 #ifdef PCAN_DEBUG
     printf("pcan_CAN_TranslateBaud: baudInt = %i, baudAPI = 0x%04X\n",
-	   baudInt, baudAPI);
+           baudInt, baudAPI);
 #endif
 
     // Create N-API value to return
