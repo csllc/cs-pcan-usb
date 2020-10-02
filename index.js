@@ -113,7 +113,7 @@ module.exports = class PcanUsb extends Duplex {
 
   write(msg) {
     let me = this;
-
+    
     if (msg.buf.length <= 8) {
       let tpcan_buffer = tpcan.toTPCANMsg(msg);
       // Write message to bus
@@ -126,7 +126,7 @@ module.exports = class PcanUsb extends Duplex {
       }
       // If loopback is enabled, push message back into receive stream
       if (me.options.loopback) {
-	me.push(msg);
+	me.push(tpcan.toMsg(tpcan_buffer));
       }
     } else {
       throw new Error("Tried to send invalid CAN data");

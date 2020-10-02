@@ -43,7 +43,7 @@ board.list()
   .then(function() {
 
     // send a command
-    board.write({ id: 0x10EF8001, ext: true, buf: [0x45, 0x00, 0x00, 0x04, 0x00, 0x00] });
+    board.write({ id: 0x10EF8001, ext: true, buf: Buffer.from([0x45, 0x00, 0x00, 0x04, 0x00, 0x00]) });
 
 
   })
