@@ -55,45 +55,30 @@ module.exports = class PcanUsb extends Duplex {
 
     return new Promise(function(resolve, reject) {
       // Initialize CAN port (aka "channel")
-      let result = pcan.Initialize(port, pcan.TranslateBaud(me.options.canRate));
-      if (result != 0) {
-	reject(result);
-      } else {
-	me.port = port;
-	me._configure();
-	me.isReady = true;
-	me.emit('open');
-	resolve(result);
-      }
+      pcan.Initialize(port, pcan.TranslateBaud(me.options.canRate));
+
+      me.port = port;
+      me._configure();
+      me.isReady = true;
+      me.emit('open');
+      resolve();
     })
       .then(function() {
-	// Set up data event handler
-	me.on('_data', me._onData);
-
-	// Set up close event handler
+	// Close event handler
 	me.on('close', function() {
-	  pcan.DisableEvent(me.port);
-	  pcan.Reset(me.port);
-	  pcan.Uninitialize(me.port);
-	  
-	  me.isReady = false;
-	  me.port = null;
-	  this.push(null);
+	  me.close();
 	});
-      
+
+	// Data receive event handler
+	me.on('_data', me._onData.bind(me));
+     
 	// Enable data event
-	let result = pcan.EnableEvent(port, function() {
+	pcan.EnableEvent(port, function() {
 	  me.emit('_data');
 	});
-	if (result != 0) {
-	  throw new Error("Error at pcan.EnableEvent.");
-	}
 
 	// Enable busoff auto-reset
-	result = pcan.SetValue(port, 0x07, Buffer.from([0x01]));
-	if (result != 0) {
-	  throw new Error("Error turning on busoff auto-reset");
-	}
+	pcan.SetValue(port, 0x07, Buffer.from([0x01]));
 
       })
       .catch(function(err) {
@@ -104,10 +89,14 @@ module.exports = class PcanUsb extends Duplex {
 
   close() {
     let me = this;
+    // Remove listeners
+    me.removeAllListeners();
+
+    // Try to close stream
+    me.emit('close');
 
     if (this.isOpen()) {
       try {
-	me.emit('close');
 	pcan.DisableEvent(me.port);
 	pcan.Reset(me.port);
 	pcan.Uninitialize(me.port);
@@ -116,8 +105,10 @@ module.exports = class PcanUsb extends Duplex {
 	console.error(err);
       }
     }
+    
     this.port = null;
     this.isReady = false;
+    this.push(null);
   }
 
   write(msg) {
@@ -155,7 +146,7 @@ module.exports = class PcanUsb extends Duplex {
 
   // Required function for cs-modbus GenericConnection
   isOpen() {
-    return this.port && this.port.isOpen && this.isReady;
+    return this.port && this.isReady;
   }
 
   // Required function for cs-modbus GenericConnection
