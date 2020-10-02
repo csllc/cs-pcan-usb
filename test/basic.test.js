@@ -3,7 +3,7 @@
  *
  */
 
-const CanUsbCom = require('..');
+const CsPcanUsb = require('..');
 const chai = require('chai');
 const expect = chai.expect;
 const should = chai.should();
@@ -12,10 +12,10 @@ chai.use(require('chai-events'));
 const { Duplex } = require('stream');
 
 const CAN_OPTIONS = {
-  canRate: 500000,
+  canRate: 250000,
 };
 
-/*
+
 // Define a simple stream to send packet(s)
 class SendStream extends Duplex {
 
@@ -55,13 +55,12 @@ class ReceiveStream extends Duplex {
 
 }
 
-*/
 
 describe('List available devices', () => {
 
   it('should be at least one device', async () => {
 
-    let can = new CanUsbCom(CAN_OPTIONS);
+    let can = new CsPcanUsb(CAN_OPTIONS);
 
     let result = await can.list();
     
@@ -101,7 +100,7 @@ describe('Send a Message', () => {
   before(async () => {
 
     // set and keep for later tests
-    can = new CanUsbCom(CAN_OPTIONS);
+    can = new CsPcanUsb(CAN_OPTIONS);
 
     let result = await can.list();
 
@@ -194,7 +193,7 @@ describe('Receive a Message', () => {
   before(async () => {
 
     // set and keep for later tests
-    can = new CanUsbCom(CAN_OPTIONS);
+    can = new CsPcanUsb(CAN_OPTIONS);
 
     let result = await can.list();
 
@@ -263,7 +262,7 @@ describe('Receive a Message', () => {
 });
 
 
-/*
+
 describe('Loopback Mode', () => {
 
   let can = null;
@@ -272,7 +271,7 @@ describe('Loopback Mode', () => {
   before(async () => {
 
     // set and keep for later tests
-    can = new CanUsbCom(Object.assign(CAN_OPTIONS, { loopback: true }));
+    can = new CsPcanUsb(Object.assign(CAN_OPTIONS, { loopback: true }));
 
     let result = await can.list();
 
@@ -331,7 +330,7 @@ describe('Implement a standard stream interface', () => {
   before(async () => {
 
     // set and keep for later tests
-    can = new CanUsbCom(CAN_OPTIONS);
+    can = new CsPcanUsb(CAN_OPTIONS);
 
     can.pipe(receiver);
     sender.pipe(can);
@@ -380,4 +379,4 @@ describe('Implement a standard stream interface', () => {
 
   })
 });
-*/
+
