@@ -64,7 +64,7 @@ void pcanDumpBuffer(BYTE *buffer, size_t bufferLength);
 const char *pcanMsgtypeLookup(TPCANMessageType type);
 
 // Print the contents of a TPCANTimestamp structure to stdout in a human-readable
-// format for debuging purposes
+// format for debugging purposes
 void pcanDumpTimestamp(TPCANTimestamp *timestamp);
 
 // Print a TPCANTimestampFD (uint64_t) to stdout in a human-readable format
@@ -86,7 +86,7 @@ uint8_t pcanDLCDecode(uint8_t dlc);
 // in a human-readable format for debugging purposes
 void pcanDumpChannelInfo(TPCANChannelInformation *info);
 
-// Return pointer to string representation ofa PCAN device type,
+// Return pointer to string representation of a PCAN device type,
 // given a device type defined in PCANBasic.h
 const char *pcanDeviceTypeLookup(TPCANDevice device);
 

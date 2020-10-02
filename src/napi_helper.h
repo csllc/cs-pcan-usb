@@ -48,7 +48,7 @@
 void napiDumpValue(napi_env env, napi_value value, char* name);
 
 
-// Return poiner to string representation of N-API status code, given a status
+// Return pointer to string representation of N-API status code, given a status
 // code defined in js_native_api_types.h
 const char *napiStatusLookup(napi_status status);
 

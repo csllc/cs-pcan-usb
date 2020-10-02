@@ -17,7 +17,7 @@
 
 //#define PCAN_WIN32_ONLY
 // Uncomment to disable declarations for functions that use N-API.
-// This is required when compiling test programs that rely soley on the Win32
+// This is required when compiling test programs that rely solely on the Win32
 // and PCAN-Basic APIs.
 
 
@@ -152,7 +152,7 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info);
 #endif
 
 
-// Read from FD CAN bus RX buffer, copying data into omessage and
+// Read from FD CAN bus RX buffer, copying data into message and
 // timestamp structures
 // Arguments passed through N-API:
 // - TPCANHandle Channel (uint32)
@@ -234,7 +234,7 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info);
 
 
 // Given an N-API callback function, enable the message receive Win32 event
-// and spawn a worker thread that calls the callback funciton when a new message
+// and spawn a worker thread that calls the callback function when a new message
 // is received.
 // Arguments passed through N-API:
 // - TPCANHandle Channel (uint32)

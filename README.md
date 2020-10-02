@@ -1,6 +1,6 @@
 # NodeJS PCAN-USB Module
 
-This module provies a NodeJS interface to the [PEAK-System](https://www.peak-system.com/) [PCAN-USB](https://www.peak-system.com/PCAN-USB.199.0.html?&L=1) adapter, and possibly others that are supported by the [PCAN-Basic library](https://www.peak-system.com/PCAN-Basic.239.0.html?&L=1).
+This module provides a NodeJS interface to the [PEAK-System](https://www.peak-system.com/) [PCAN-USB](https://www.peak-system.com/PCAN-USB.199.0.html?&L=1) adapter, and possibly others that are supported by the [PCAN-Basic library](https://www.peak-system.com/PCAN-Basic.239.0.html?&L=1).
 
 This module is meant to serve as a drop-in replacement for `can-usb-com`, allowing the PCAN-USB adapter to be used in place of [GridConnect CAN-USB-COM](https://www.gridconnect.com/products/usb-can-interface-can-usb-com).
 
@@ -115,7 +115,7 @@ By default, all CAN message are captured, but this can be limited by applying a 
 The PCAN-USB adapter effectively supports one message filter at a time. If multiple filters are applied, the resulting filter spans the range of the highest to lowest IDs of all filters.
 
 Three filter formats are supported by the package:
- - `code` and `mask` format, directly specifying the aceptance filter with a code and mask
+ - `code` and `mask` format, directly specifying the acceptance filter with a code and mask
 
         `code: 0x10EF0000, mask: 0xFFFF0000`
 
@@ -140,8 +140,8 @@ acceptance_mask = ~(fromID ^ toID)
 The module emits the following events:
  - `open` when the serial port is successfully opened
  - `error` if an error occurs (like the serial port could not be opened)
- - `data` when an incoming CANBUS frame is received
- - `write` when an outgoing CANBUS frame is sent to the device (the event occurs before the frame is actually put on the wire)
+ - `data` when an incoming CAN bus frame is received
+ - `write` when an outgoing CAN bus frame is sent to the device (the event occurs before the frame is actually put on the wire)
  - `close` when the port is closed
 
 To listen for the events, use the typical NodeJS EventEmitter pattern:
@@ -186,7 +186,7 @@ Refer to the PCAN-Basic documentation for details on the full API that this modu
 
 ## Development
 
-Please do the following before updating or modifing this package:
+Please do the following before updating or modifying this package:
 
  - Please lint any changes using `eslint`.
  - Confirm that unit tests pass, noting the exceptions described below.
@@ -203,7 +203,7 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
 
 The following have been observed as potential sources of unexpected behavior in the future.
 
- - No error is thrown when the PCAN-USB dongle is unpluged while the module is running.
+ - No error is thrown when the PCAN-USB dongle is unplugged while the module is running.
  - The PCAN-Basic API does not provide the means to enable a CAN adapter's loopback ("self-receive" or "echo") feature. This is instead simulated in `cs-pcan-usb` by pushing data passed to the write method back into the receive data stream. 
  - As a result of the above, the expected outcome of the test units (`npm test`) is that all pass except those in `filter.test.js` that test `should.not.emit('data')`.
 

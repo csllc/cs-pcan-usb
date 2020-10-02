@@ -147,7 +147,7 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info)
         return 0;
     }
 
-    // Retreive arguments
+    // Retrieve arguments
     uint32_t pcanChannel;
     status = napi_get_value_uint32(env, argv[0], &pcanChannel);
     assert(status == napi_ok);
@@ -194,7 +194,7 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
 
-    // Retrieve callback info and argment list
+    // Retrieve callback info and argument list
     size_t argc = CAN_INITIALIZEFD_ARGC;
     napi_value argv[CAN_INITIALIZEFD_ARGC];
 
@@ -207,7 +207,7 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info)
         return 0;
     }
 
-    // Retreive arguments
+    // Retrieve arguments
     uint32_t pcanChannel;
     status = napi_get_value_uint32(env, argv[0], &pcanChannel);
     assert(status == napi_ok);
@@ -573,7 +573,7 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     // Copy read values into objects passed from N-API
-    // arvg[1] MessageBuffer
+    // argv[1] MessageBuffer
     napi_value pcanMessageBufferID; // uint32
     napi_value pcanMessageBufferMsgtype; // uint32
     napi_value pcanMessageBufferDLC; // uint32
@@ -628,7 +628,7 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
 
-    // Retrieve calback info and argument list
+    // Retrieve callback info and argument list
     size_t argc = CAN_WRITE_ARGC;
     napi_value argv[CAN_WRITE_ARGC];
 
@@ -728,7 +728,7 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
 
-    // Get calback info and argument list
+    // Get callback info and argument list
     size_t argc = CAN_WRITEFD_ARGC;
     napi_value argv[CAN_WRITEFD_ARGC];
 
@@ -1040,7 +1040,7 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
     status = napi_get_value_uint32(env, argv[3], &pcanMode);
     assert(status == napi_ok);
 
-    // Set or ammend the CAN message filter ranges
+    // Set or amend the CAN message filter ranges
     TPCANStatus pcanStatus = PCAN_ERROR_UNKNOWN;
     pcanStatus = CAN_FilterMessages(pcanChannel, pcanFromID, pcanToID, pcanMode);
 
@@ -1621,7 +1621,7 @@ napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info)
         return 0;
     }
 
-    // Retreive arguments
+    // Retrieve arguments
     // argv[0] Integer baud
     uint32_t baudInt;
     status = napi_get_value_uint32(env, argv[0], &baudInt);

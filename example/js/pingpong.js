@@ -9,7 +9,7 @@
  * CANBUS communication is physically possible).physically
  *
  * This script opens both devices, and each device sends a message to the other.
- * When a device receives a messsage from the other, it immediately sends it back.it
+ * When a device receives a message from the other, it immediately sends it back.it
  *
  * We use the 'priority' field of the message ID to keep track of who originated
  * the message.

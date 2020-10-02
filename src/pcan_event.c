@@ -251,7 +251,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 	return 1;
     }
 
-    // Pack paramters into struct to be passed to worker thread
+    // Pack parameters into struct to be passed to worker thread
     threadParameters_t pcanEventThreadParams = {
 	pcanChannel,
 	callback
@@ -283,7 +283,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
     case WAIT_OBJECT_0:
 	break;
     case WAIT_ABANDONED:
-	printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_ABANDONDED\n");
+	printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_ABANDONED\n");
 	return 1;
     case WAIT_TIMEOUT:
 	printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
