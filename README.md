@@ -189,13 +189,48 @@ Refer to the PCAN-Basic documentation for details on the full API that this modu
 Please do the following before updating or modifying this package:
 
  - Please lint any changes using `eslint`.
- - Confirm that unit tests pass, noting the exceptions described below.
+ - Confirm that unit tests pass, noting the exceptions described in the next section.
 
 In order to run unit tests (`npm test`), at least one PCAN-USB device must be connected to the computer.
 
 The `pingpong` test is currently configured to use `cs-pcan-usb` for one adapter, and `can-usb-com` for the other. These must be connected via a properly terminated bus.
 
 Do not run any tests on a bus with active traffic, since receiving unexpected CAN packets may confuse the tests.
+
+### Build Environment Setup - Windows 10 x86 64-bit
+    
+ 1. Install NodeJS. Version 12.18.3 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through the Command Prompt. If not, add the appropriate paths to the user's `PATH` environmental variable.
+ 1. Install the `windows-build-tools` Node package by running the following in an **administrative** Command Prompt or PowerShell window:
+    `npm install -g windows-build-tools`
+    Exit the administrative console after this completes and use a console with normal privileges for the rest of the setup
+ 1. Clone the `cs-pcan-usb` repository:
+    `git clone https://github.com/csllc/cs-pcan-usb`
+ 1. Install dependencies:
+    `cd cs-pcan-usb\`
+    `npm install`
+ 1. Build:
+    - `node-pre-gyp configure`
+    - `node-pre-gyp build`
+
+Depending on shell or executable path configuration, it may be necessary to use `npx` to execute `node-pre-gyp`.
+
+### Distribution
+
+As part of the installation process, the platform-specific binary portion of the native addon is retrieved from a separate GitHub repository at [@csllc/cs-pcan-usb-binding](https://github.com/csllc/cs-pcan-usb-binding). This allows the `cs-pcan-usb` module to be installed on machines that do not have a full development environment set up to build it from source.
+
+This package is configured such that `npm install` will attempt to download the pre-built binary first, and fall back onto building from source if that fails.
+
+### Building and Packaging for Distribution
+
+After incrementing the package version number in this repository, the following commands can be used to generate a corresponding binary package for release.
+
+ - `node-pre-gyp configure`
+ - `node-pre-gyp build`
+ - `node-pre-gyp package`
+ 
+Depending on shell or executable path configuration, it may be necessary to use `npx` to execute the above commands.
+
+Afterwards, create a new release in [@csllc/cs-pcan-usb-binding](https://github.com/csllc/cs-pcan-usb-binding) using the same new version number and attach the `.tar.gz` file found in `build/stage/{version}/`.
 
 ## Functionality Limitations
 
