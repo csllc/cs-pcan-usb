@@ -1,5 +1,5 @@
 {
-  "name": "pcan-usb",
+  "name": "cs-pcan-usb",
   "version": "0.0.0",
   "description": "PCAN-USB module for NodeJS",
   "main": "index.js",
@@ -9,6 +9,8 @@
     "bindings": "~1.2.1",
     "can-usb-com": "^4.0.0",
     "eslint": "^7.10.0",
+    "node-pre-gyp": "^0.15.0",
+    "node-pre-gyp-github": "^1.4.3",
     "stream": "0.0.2"
   },
   "devDependencies": {
@@ -18,7 +20,15 @@
     "mocha": "^8.1.3"
   },
   "scripts": {
+    "install": "node-pre-gyp install --fallback-to-build",
     "test": "mocha test"
+  },
+  "binary": {
+    "module_name": "cs_pcan_usb",
+    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
+    "module_path": "./lib/binding/{configuration}/{node_abi}-{platform}-{arch}/",
+    "host": "https://github.com/csllc/cs-pcan-usb/releases/download/",
+    "remote_path": "{version}"
   },
   "gypfile": true
 }

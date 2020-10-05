@@ -1,6 +1,10 @@
 'use strict';
 
-const pcan = require('bindings')('pcan.node');
+const binary = require('node-pre-gyp');
+const path = require('path');
+const pcan_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
+const pcan = require(pcan_path);
+
 const { Duplex } = require('stream');
 const tpcan = require('./lib/tpcan.js');
 
