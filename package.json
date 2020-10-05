@@ -1,6 +1,6 @@
 {
   "name": "cs-pcan-usb",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "PCAN-USB module for NodeJS",
   "main": "index.js",
   "private": true,
