@@ -27,7 +27,7 @@
     "module_name": "cs_pcan_usb",
     "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
     "module_path": "./lib/binding/{configuration}/{node_abi}-{platform}-{arch}/",
-    "host": "https://github.com/csllc/cs-pcan-usb-binding/releases/download/{version}/",
+    "host": "https://github.com/csllc/cs-pcan-usb-binding/releases/download/",
     "remote_path": "{version}"
   },
   "repository": {
