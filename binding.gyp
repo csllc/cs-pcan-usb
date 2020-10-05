@@ -26,7 +26,9 @@
             "dependencies": [ "<(module_name)" ],
             "copies": [
                 {
-                    "files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
+                    "files": [ "<(PRODUCT_DIR)/<(module_name).node",
+                               "lib/peak/PCANBasic.dll",
+                               "lib/peak/ReadMe.txt" ],
                     "destination": "<(module_path)"
                 }
             ]
