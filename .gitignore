@@ -39,4 +39,4 @@ Thumbs.db
 UserInterfaceState.xcuserstate
 doc/~*
 build/
-lib/binding/
+binding/

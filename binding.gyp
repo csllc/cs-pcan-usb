@@ -9,10 +9,10 @@
                          "src/common_helper.c" ],
             "msvs_settings": { },
             "include_dirs": [
-                "../../../tools/PCAN-Basic API/Include",
+                "ext/pcan_basic-win32-x64/include",
             ],
             "library_dirs": [
-                "../../../tools/PCAN-Basic API/x64/VC_LIB",
+                "ext/pcan_basic-win32-x64/lib",
             ],
             "link_settings": {
                 "libraries": [
@@ -27,8 +27,8 @@
             "copies": [
                 {
                     "files": [ "<(PRODUCT_DIR)/<(module_name).node",
-                               "lib/peak/PCANBasic.dll",
-                               "lib/peak/ReadMe.txt" ],
+                               "ext/pcan_basic-win32-x64/bin/PCANBasic.dll",
+                               "ext/pcan_basic-win32-x64/bin/ReadMe.txt" ],
                     "destination": "<(module_path)"
                 }
             ]
