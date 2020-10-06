@@ -12,7 +12,9 @@
 
 #include "common_helper.h" // provide lookupString
 #include "pcan_helper.h"
-#include "pcan_event.h"    // provide threadParameters_t
+#if defined _WIN32
+#include "pcan_event_win32.h"    // provide threadParameters_t
+#endif
 
 
 // ----------------------------------- // -----------------------------------

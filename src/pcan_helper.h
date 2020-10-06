@@ -13,7 +13,11 @@
 #include <PCANBasic.h>   // provide PCAN-Basic constants and types
 #include <stdint.h>      // provide uintX_t
 
-#include "pcan_event.h"  // provide threadParameters_t
+#if defined _WIN32
+#include "pcan_event_win32.h"  // provide threadParameters_t
+// TODO consider making common pcan_event.h to share threadParamters_t
+// between macOS and Win32 builds
+#endif
 
 
 // ----------------------------------- // -----------------------------------

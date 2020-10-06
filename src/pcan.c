@@ -10,13 +10,22 @@
 #include <assert.h>      // provide assert
 #include <node_api.h>    // provide N-API types, constants, and functions
 #include <stdio.h>       // provide printf
+
+#if defined _WIN32
 #include <windows.h>     // provide Win32 types, constants, and functions
 #include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
+#elif defined __APPLE__
+#include <PCUSB.h>       // provide PCAN-Basic types, constants, and functions
+#endif
 
 #include "pcan.h"
 #include "pcan_helper.h" // provide pcanDLCDecode
-#include "pcan_event.h"  // provide pcanEventEnable and pcanEventDisable
 #include "napi_helper.h" // provide DECLARE_NAPI_METHOD
+#if defined _WIN32
+#include "pcan_event_win32.h"  // provide pcanEventEnable and pcanEventDisable
+#elif defined __APPLE__
+#include "pcan_event_darwin.h" // provide pcanEventEnable and pcanEventDisable
+#endif
 
 
 // ----------------------------------- // -----------------------------------

@@ -15,7 +15,7 @@
 #include <PCANBasic.h>   // provide PCAN-Basic constants and types
 
 #include "pcan.h"        // provide default callback function
-#include "pcan_event.h"
+#include "pcan_event_win32.h"
 #include "pcan_helper.h" // provide pcanStatusLookup
 
 

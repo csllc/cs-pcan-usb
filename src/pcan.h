@@ -21,7 +21,7 @@
 // and PCAN-Basic APIs.
 
 
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_WIN32_ONLY // TODO consider renaming to PCAN_NO_NAPI
 #include <node_api.h> // provide N-API types
 #endif
 
