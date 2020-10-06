@@ -211,6 +211,8 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
  1. Build:
     - `node-pre-gyp configure`
     - `node-pre-gyp build`
+ 1. Clean build directory:
+    - `node-gyp clean`
 
 Depending on shell or executable path configuration, it may be necessary to use `npx` to execute `node-pre-gyp`.
 
