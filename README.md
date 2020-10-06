@@ -206,8 +206,8 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
  1. Clone the `cs-pcan-usb` repository:
     `git clone https://github.com/csllc/cs-pcan-usb`
  1. Install dependencies:
-    `cd cs-pcan-usb\`
-    `npm install`
+    - `cd cs-pcan-usb\`
+    - `npm install`
  1. Build:
     - `node-pre-gyp configure`
     - `node-pre-gyp build`
