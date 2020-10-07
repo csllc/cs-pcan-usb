@@ -6,7 +6,13 @@
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
 
-#include <PCANBasic.h>     // provide PCAN-Basic constants and types
+#if defined _WIN32
+#include <windows.h>     // provide Win32 types, constants, and functions
+#include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
+#elif defined __APPLE__
+#include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
+#endif
+
 #include <stdint.h>        // provide uintX_t
 #include <stdio.h>         // provide printf
 
@@ -307,14 +313,35 @@ const char *pcanParameterLookup(TPCANParameter parameter)
     
 
 
-void pcanDumpThreadParameters(threadParameters_t *threadParameters)
+void pcanDumpThreadParametersWin32(threadParameters_t *threadParameters)
 {
     printf("threadParameters {\n"
-	   "  canChannel = 0x%02X\n"
-	   "  callback = %p\n"
-	   "}\n",
-	   threadParameters->canChannel,
-	   threadParameters->callback);
+           "  canChannel  = 0x%02X\n"
+           "  callback    = %p\n"
+           "}\n",
+           threadParameters->canChannel,
+           threadParameters->callback);
+
+    return;
+}
+
+
+
+
+void pcanDumpThreadParametersDarwin(threadParameters_t *threadParameters)
+{
+    printf("threadParameters {\n"
+           "  canChannel  = 0x%02X\n"
+           "  callback    = %p\n"
+           "  pipeRead    = %i\n"
+           "  pipeSpawn   = %i\n"
+           "  pipeExit    = %i\n"
+           "}\n",
+           threadParameters->canChannel,
+           threadParameters->callback,
+           threadParameters->pipeRead,
+           threadParameters->pipeSpawn,
+           threadParameters->pipeExit);
 
     return;
 }

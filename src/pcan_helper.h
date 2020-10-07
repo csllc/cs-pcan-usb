@@ -10,13 +10,16 @@
 #ifndef _PCAN_HELPER_H_
 #define _PCAN_HELPER_H_
 
-#include <PCANBasic.h>   // provide PCAN-Basic constants and types
 #include <stdint.h>      // provide uintX_t
 
 #if defined _WIN32
-#include "pcan_event_win32.h"  // provide threadParameters_t
-// TODO consider making common pcan_event.h to share threadParamters_t
-// between macOS and Win32 builds
+#include <windows.h>     // provide Win32 types, constants, and functions
+#include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
+#include "pcan_event_win32.h"   // provide threadParameters_t
+#elif defined __APPLE__
+#include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
+#include "pcan_helper_darwin.h" // provide TPCANChannelInformation
+#include "pcan_event_darwin.h"  // provide threadParameters_t
 #endif
 
 
@@ -80,8 +83,12 @@ void pcanDumpTimestampFD(TPCANTimestampFD timestamp);
 const char *pcanParameterLookup(TPCANParameter parameter);
 
 // Print the contents of a threadParameters_t structure to stdout in a
-// human-readable format for debugging purposes
-void pcanDumpThreadParams(threadParameters_t *threadParameters);
+// human-readable format for debugging purposes, for Windows
+void pcanDumpThreadParamsWin32(threadParameters_t *threadParameters);
+
+// Print the contents of a threadParameters_t structure to stdout in a
+// human-readable format for debugging purposes, for macOS
+void pcanDumpThreadParametersDarwin(threadParameters_t *threadParameters);
 
 // Return message size, in bytes, given a DLC code
 uint8_t pcanDLCDecode(uint8_t dlc);
