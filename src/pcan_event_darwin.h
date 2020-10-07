@@ -1,7 +1,10 @@
 /* PCAN-Basic event control functions and worker thread process
 
-   Collection of functions that print TPCAN structures to stdout, look up 
-   string representations of constants, and decode DLC values.
+   Functions that enable and disable the use of an event used by the PCAN-Basic
+   library to signal that received data is available for reading. When enabled,
+   a worker thread is spawned that waits on this event and invokes a callback
+   function when its state changes to signaled, which presumably calls 
+   CAN_Read() to retrieve the newly received data.
 
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
@@ -30,14 +33,6 @@ typedef struct threadParameters_s
     int pipeExit;
 } threadParameters_t;
 
-// Security access requested for event objects and thread
-#define EVENT_PERMISSIONS (EVENT_MODIFY_STATE | SYNCHRONIZE)
-
-// Indices of events when packed into struct passed to WaitForMultipleObjects
-// in pcanEventThreadProc
-#define EVENT_INDEX_READ   (0)
-#define EVENT_INDEX_EXIT   (1)
-
 
 
 
@@ -56,7 +51,7 @@ typedef struct threadParameters_s
 // ----------------------------------- // -----------------------------------
 // Local functions
 
-// Worker thread process, passed to CreateThread by pcanEventEnable
+// Worker thread process, passed to pthread_create by pcanEventEnable
 void *pcanEventThreadProc(void *lpParam);
 
 
@@ -65,14 +60,14 @@ void *pcanEventThreadProc(void *lpParam);
 // ----------------------------------- // -----------------------------------
 // Public functions
 
-// Enable Win32 event signaling data is received on CAN bus
+// Enable event signaling data is received on CAN bus
 // Accepts callback function that is called when event is signaled:
 // void (*callback) (int)
 // where the int argument is the CAN channel, which is passed to CAN_Initialize
 // and others as TPCANHandle Channel
 int pcanEventEnable(TPCANHandle pcan_Channel, void *callback);
 
-// Disable the previously enabled Win32 event
+// Disable the previously enabled event
 int pcanEventDisable(TPCANHandle pcan_Channel);
 
 
