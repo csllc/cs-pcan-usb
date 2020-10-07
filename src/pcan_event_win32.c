@@ -71,6 +71,10 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
     threadParameters_t threadParams = { 0 };
     memcpy(&threadParams, (threadParameters_t*)lpParam, sizeof(threadParams));
 
+#ifdef PCAN_EVENT_WIN32_DEBUG
+    pcanDumpThreadParametersWin32(&threadParams);
+#endif
+
     // Open thread-local handles for events
     HANDLE pcanEventRead = INVALID_HANDLE_VALUE;
     HANDLE pcanEventSpawn = INVALID_HANDLE_VALUE;
@@ -126,7 +130,7 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
     events[EVENT_INDEX_EXIT] = pcanEventExit;
 
     while (threadExit == 0) {
-#ifdef PCAN_EVENT_DEBUG
+#ifdef PCAN_EVENT_WIN32_DEBUG
         printf("pcanEventThreadProc: Waiting for pcanEventRead or "
                "pcanEventExit...\n");
 #endif
@@ -159,7 +163,7 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
                 (threadParams.callback)(threadParams.canChannel);
                 break;
             case EVENT_INDEX_EXIT: // Clean up and exit thread
-#ifdef PCAN_EVENT_DEBUG
+#ifdef PCAN_EVENT_WIN32_DEBUG
                 printf("pcanEventThreadProc: Exiting thread\n");
 #endif
                 CloseHandle(pcanEventRead);
@@ -274,7 +278,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
     // Wait for pcanThread_event to be set, indicating that the thread
     // was successfully started
-#ifdef PCAN_EVENT_DEBUG
+#ifdef PCAN_EVENT_WIN32_DEBUG
     printf("pcanEventEnable: Waiting for worker thread to start...\n");
 #endif
 
@@ -340,7 +344,7 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     // Wait for the worker thread to exit
     int pcanEventThreadExitCode = 0;
     
-#ifdef PCAN_EVENT_DEBUG
+#ifdef PCAN_EVENT_WIN32_DEBUG
     printf("pcanEventDisable: Waiting for worker thread to exit...\n");
 #endif
 
@@ -365,7 +369,7 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
         }
         else
         {
-#ifdef PCAN_EVENT_DEBUG
+#ifdef PCAN_EVENT_WIN32_DEBUG
             printf("pcanEventDisable: Worker thread exited with code %i\n",
                    pcanEventThreadExitCode);
 #endif
