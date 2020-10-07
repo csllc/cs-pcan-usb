@@ -109,6 +109,11 @@ void *pcanEventThreadProc(void *lpParam)
     TPCANMsg message = { 0 };
     TPCANStatus pcanStatus;
 
+    // Determine largest file descriptor
+    int nfds = 0;
+    nfds = (threadParams.pipeRead > threadParams.pipeExit) ?
+        threadParams.pipeRead : threadParams.pipeExit;
+
     // Wait for either file descriptor to be signaled
     int threadExit = 0;
 
@@ -117,9 +122,7 @@ void *pcanEventThreadProc(void *lpParam)
 #ifdef PCAN_EVENT_DARWIN_DEBUG
         printf("pcanEventThreadProc: Waiting for pipeRead or pipeExit...\n");
 #endif
-        ret = select(threadParams.pipeExit+1, &readfds, NULL, NULL, NULL);
-
-        // TODO Read from the pipe and flush it out? Is it a problem?
+        ret = select(nfds+1, &readfds, NULL, NULL, NULL);
 
         if (FD_ISSET(threadParams.pipeRead, &readfds))
         {
