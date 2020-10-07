@@ -1,7 +1,10 @@
 /* PCAN-Basic event control functions and worker thread process
 
-   Collection of functions that print TPCAN structures to stdout, look up 
-   string representations of constants, and decode DLC values.
+   Functions that enable and disable the use of an event used by the PCAN-Basic
+   library to signal that received data is available for reading. When enabled,
+   a worker thread is spawned that waits on this event and invokes a callback
+   function when its state changes to signaled, which presumably calls 
+   CAN_Read() to retrieve the newly received data.
 
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
