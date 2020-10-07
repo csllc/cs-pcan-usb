@@ -1,4 +1,7 @@
 {
+    "variables": {
+        "mac_dylib": "libPCBUSB.0.9.dylib"
+    },
     "targets": [ {
         "target_name": "<(module_name)",
         "sources": [ "src/pcan.c",
@@ -6,18 +9,18 @@
                      "src/napi_helper.c",
                      "src/common_helper.c" ],
         "conditions": [
-            ["OS=='win'", {
+            [ "OS=='win'", {
                 "sources": [ "src/pcan_event_win32.c" ],
                 "msvs_settings": { },
                 "include_dirs": [ "ext/pcan_basic-win32-x64/include" ],
                 "library_dirs": [ "ext/pcan_basic-win32-x64/lib" ],
                 "link_settings": { "libraries": [ "-lPCANBasic" ] }
             } ],
-            ["OS=='mac'", {
+            [ "OS=='mac'", {
                 "sources": [ "src/pcan_event_darwin.c" ],
                 "include_dirs": [ "ext/pcusb-darwin-x64/include" ],
-                "library_dirs": [ "ext/pcusb-darwin-x64/lib" ],
-                "link_settings": { "libraries": [ "-lPCUSB" ] }
+                "library_dirs": [ "<(module_root_dir)/ext/pcusb-darwin-x64/lib" ],
+                "link_settings": { "libraries": [ "-lPCBUSB" ] }
             } ]
         ]
     },
@@ -28,17 +31,29 @@
         "copies": [ {
             "files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
             "conditions": [
-                ["OS=='win'", {
+                [ "OS=='win'", {
                     "files": [ "ext/pcan_basic-win32-x64/bin/PCANBasic.dll",
                                "ext/pcan_basic-win32-x64/bin/ReadMe.txt" ]
                 } ],
-                ["OS=='mac'", {
+                [ "OS=='mac'", {
                     "files": [ "ext/pcusb-darwin-x64/COPYRIGHT",
                                "ext/pcusb-darwin-x64/LICENSE",
-                               "ext/pcusb-darwin-x64/README" ]
+                               "ext/pcusb-darwin-x64/README",
+                               "ext/pcusb-darwin-x64/lib/<(mac_dylib)" ]
                 } ],
             ],
             "destination": "<(module_path)"
-        } ]
+        } ],
+        "actions": [ {
+            "conditions": [
+                [ "OS=='mac'", {
+                    "action_name": "install_name_tool",
+                    "inputs": [ "<(PRODUCT_DIR)/<(module_name).node" ],
+                    "outputs": [ "" ],
+                    "action": [ "install_name_tool", "-change", "<(mac_dylib)", "@loader_path/<(mac_dylib)", "<(PRODUCT_DIR)/<(module_name).node" ]
+                } ]
+            ] }
+        ]
     } ]
 }
+
