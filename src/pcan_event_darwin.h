@@ -16,7 +16,7 @@
 #include <pthread.h>
 
 
-#define PCAN_EVENT_DARWIN_DEBUG
+//#define PCAN_EVENT_DARWIN_DEBUG
 // Uncomment to enable debugging messages, which may affect timing or
 // performance
 
