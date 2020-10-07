@@ -63,7 +63,7 @@ const char *napiValuetypeLookup(napi_valuetype valuetype);
 bool napiCheck(napi_env env, napi_status status);
 
 // Print all struct members to stdout given an napi_extended_error_info struct
-void napiDumpErrorInfo(napi_extended_error_info *errorInfo);
+void napiDumpErrorInfo(const napi_extended_error_info *errorInfo);
 
 
 

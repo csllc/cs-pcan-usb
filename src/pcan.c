@@ -16,18 +16,15 @@
 #if defined _WIN32
 #include <windows.h>     // provide Win32 types, constants, and functions
 #include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
+#include "pcan_event_win32.h"  // provide pcanEventEnable and pcanEventDisable
 #elif defined __APPLE__
 #include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
+#include "pcan_event_darwin.h" // provide pcanEventEnable and pcanEventDisable
 #endif
 
 #include "pcan.h"
 #include "pcan_helper.h" // provide pcanDLCDecode
 #include "napi_helper.h" // provide DECLARE_NAPI_METHOD
-#if defined _WIN32
-#include "pcan_event_win32.h"  // provide pcanEventEnable and pcanEventDisable
-#elif defined __APPLE__
-#include "pcan_event_darwin.h" // provide pcanEventEnable and pcanEventDisable
-#endif
 
 
 // ----------------------------------- // -----------------------------------
@@ -616,7 +613,7 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info)
 
     status = napi_create_uint32(env, timestamp, &pcanTimestampFDValue);
     assert(status == napi_ok);
-    status = napi_set_named_property(env, argv[2], "timestamp", pcanTimestampFDValue);
+    status = napi_set_named_property(env, pcanTimestampBuffer, "timestamp", pcanTimestampFDValue);
     assert(status == napi_ok);
 
     // Create an N-API value for the complete read data and return it
@@ -912,7 +909,7 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info)
 
     // Put value into the buffer object passed from N-API
     napi_value pcanBufferValue;
-    status = napi_create_buffer(env, pcanBufferLength, &pcanBuffer, &pcanBufferValue);
+    status = napi_create_buffer(env, pcanBufferLength, (void**)&pcanBuffer, &pcanBufferValue);
     assert(status == napi_ok);
 
     // Create a N-API value for the result and return it

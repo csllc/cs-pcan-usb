@@ -239,19 +239,19 @@ void pcanDumpMsgFD(TPCANMsgFD *msg)
 
 void pcanDumpBuffer(BYTE *buffer, size_t bufferLength)
 {
-    int i;
+    unsigned int i;
 
     printf("{");
 
     for (i = 0; i < bufferLength; i++)
     {
-	printf("0x%02X", buffer[i]);
-	if (i != (bufferLength - 1))
-	{
-	    printf(", ");
-	}
-	// Print comma following data byte only if not second-to-last
-	// byte in byte
+        printf("0x%02X", buffer[i]);
+        if (i != (bufferLength - 1))
+        {
+            printf(", ");
+        }
+        // Print comma following data byte only if not second-to-last
+        // byte in byte
     }
 
     printf("}");

@@ -42,7 +42,7 @@
 // Constants for accessing arrays of pipe file descriptors below. Following
 // convention, the read end of the pipe is first ([0]) and the write end is
 // second ([1]).
-const enum { R, W };
+enum { R, W };
 
 
 
@@ -97,7 +97,7 @@ void *pcanEventThreadProc(void *lpParam)
     if (count != sizeof(buf))
     {
         printf("pcanEventThreadProc: Error at write(threadParams.pipeSpawn)\n");
-        return 1;
+        return (void*)1;
     }
 
     // Set up file descriptors for select
@@ -105,9 +105,6 @@ void *pcanEventThreadProc(void *lpParam)
     FD_ZERO(&readfds);
 	FD_SET(threadParams.pipeRead, &readfds);
     FD_SET(threadParams.pipeExit, &readfds);
-
-    TPCANMsg message = { 0 };
-    TPCANStatus pcanStatus;
 
     // Determine largest file descriptor
     int nfds = 0;
@@ -141,7 +138,7 @@ void *pcanEventThreadProc(void *lpParam)
         {
             printf("pcanEventThreadProc: Unexpected value returned by "
                    "select(): %i. Exiting thread.\n", ret);
-            return 1;
+            return (void*)1;
         }
     }
 
@@ -260,7 +257,7 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     else
     {
         printf("pcanEventDisable: Worker thread exited with code %i\n",
-               (int*)pcanEventThreadExitCode);
+               (int)pcanEventThreadExitCode);
     }
 
     // Close pipes
