@@ -16,12 +16,10 @@
 #include <windows.h>     // provide Win32 types, constants, and functions
 #include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
 #elif defined __APPLE__
-#include <sys/types.h>
-#include <sys/event.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include <string.h> // provide memcpy
-#include <stdlib.h> // provide malloc and free
+#include <pthread.h>     // provide pthread_create, pthread_join, and types
+#include <unistd.h>      // provide pipe
+#include <string.h>      // provide memcpy
+#include <stdlib.h>      // provide malloc and free
 #include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
 #endif
 
@@ -29,15 +27,22 @@
 #include "pcan_event_darwin.h"
 #include "pcan_helper.h" // provide pcanStatusLookup
 
-#include <fcntl.h> // provide fcntl
-#include <sys/syslimits.h> // provide PATH_MAX
-#include <errno.h>
 
-#include <unistd.h> // provide pipe
+// Pipes are used here instead of condition variables because the PCBUSB library
+// provides event notifications via the read end of a pipe, which is expected
+// to be waited on using select(2). Both pcanPipeExit[R] and pcanPipeRead
+// (pipe read ends) can be put into an fd_set and waited on by the same
+// select(2) call. This is similar to the use of WaitForMultipleObjects in
+// the Win32 version.
 
 
 // ----------------------------------- // -----------------------------------
 // Definitions
+
+// Constants for accessing arrays of pipe file descriptors below. Following
+// convention, the read end of the pipe is first ([0]) and the write end is
+// second ([1]).
+const enum { R, W };
 
 
 
@@ -50,11 +55,6 @@
 
 // ----------------------------------- // -----------------------------------
 // Local variables
-
-// Constants for accessing arrays of pipe file descriptors below. Following
-// convention, the read end of the pipe is first ([0]) and the write end is
-// second ([1])
-const enum PIPE { R, W }; // TODO hopefully no namespace collision here
 
 // Pipe fd for CAN bus read event, signaled my main thread (PCAN-Basic API) when
 // a message has been received and waited on by worker thread
@@ -129,8 +129,8 @@ void *pcanEventThreadProc(void *lpParam)
         else if (FD_ISSET(threadParams.pipeExit, &readfds))
         {
             // Clean up and exit thread
-#ifdef PCAN_EVENT_DEBUG
-            printf("pcanEventThreadProc: Exiting thread\n");
+#ifdef PCAN_EVENT_DARWIN_DEBUG
+            printf("pcanEventThreadProc: Exiting thread.\n");
 #endif
             threadExit = 1;
         }
@@ -170,12 +170,6 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
                pcanResult, pcanStatusLookup(pcanResult));
     }
 
-    // TODO: Be sure to uninitialize PCAN device if it's already initialized
-    // at startup
-
-    // We're using pipes here instead of condition variables because
-    // they can all be passed to the same select() call in the worker thread
-
     // Create pipe that worker thread will use to signal it has started
     ret = pipe(pcanPipeSpawn);
     if (ret == -1)
@@ -197,7 +191,8 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
     // Pack parameters into struct to be passed to worker thread
     threadParameters_t *pcanEventThreadParams = 0;
     pcanEventThreadParams = malloc(sizeof(*pcanEventThreadParams));
-    if (pcanEventThreadParams == 0) {
+    if (pcanEventThreadParams == 0)
+    {
         printf("pcanEventEnable: Error at malloc.\n");
         return 1;
     }
@@ -225,9 +220,8 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
     FD_ZERO(&readfds);
     FD_SET(pcanPipeSpawn[R], &readfds);
     
-    printf("pcanEventEnable: Waiting for thread to spawn...\n");
+    printf("pcanEventEnable: Waiting for thread to start...\n");
     ret = select(pcanPipeSpawn[R]+1, &readfds, NULL, NULL, NULL);
-    printf("pcanEventEnable: Select exited with %i\n", ret);
 
     // Cleanup
     free(pcanEventThreadParams);
@@ -240,6 +234,37 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
 int pcanEventDisable(TPCANHandle pcan_Channel)
 {
+    int ret = 0;
+
+    // Stop the worker thread
+    size_t count = 0;
+    int buf = 0;
+    count = write(pcanPipeExit[W], &buf, sizeof(buf));
+    if (count != sizeof(buf))
+    {
+        printf("pcanEventDisable: Error at write(pcanPipeExit)\n");
+        return 1;
+    }
+
+    // Wait for the worker thread to exit
+    void *pcanEventThreadExitCode = 0;
+
+    ret = pthread_join(pcanEventThread, &pcanEventThreadExitCode);
+    if (ret != 0)
+    {
+        printf("pcanEventDisable: Error at pthread_join\n");
+    }
+    else
+    {
+        printf("pcanEventDisable: Worker thread exited with code %i\n",
+               (int*)pcanEventThreadExitCode);
+    }
+
+    // Close pipes
+    close(pcanPipeSpawn[W]);
+    close(pcanPipeSpawn[R]);
+    close(pcanPipeExit[R]);
+    close(pcanPipeExit[W]);
 
     return 0;
 }
