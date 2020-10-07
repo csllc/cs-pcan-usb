@@ -18,8 +18,8 @@
             } ],
             [ "OS=='mac'", {
                 "sources": [ "src/pcan_event_darwin.c" ],
-                "include_dirs": [ "ext/pcusb-darwin-x64/include" ],
-                "library_dirs": [ "<(module_root_dir)/ext/pcusb-darwin-x64/lib" ],
+                "include_dirs": [ "ext/pcbusb-darwin-x64/include" ],
+                "library_dirs": [ "<(module_root_dir)/ext/pcbusb-darwin-x64/lib" ],
                 "link_settings": { "libraries": [ "-lPCBUSB" ] }
             } ]
         ]
@@ -36,10 +36,10 @@
                                "ext/pcan_basic-win32-x64/bin/ReadMe.txt" ]
                 } ],
                 [ "OS=='mac'", {
-                    "files": [ "ext/pcusb-darwin-x64/COPYRIGHT",
-                               "ext/pcusb-darwin-x64/LICENSE",
-                               "ext/pcusb-darwin-x64/README",
-                               "ext/pcusb-darwin-x64/lib/<(mac_dylib)" ]
+                    "files": [ "ext/pcbusb-darwin-x64/COPYRIGHT",
+                               "ext/pcbusb-darwin-x64/LICENSE",
+                               "ext/pcbusb-darwin-x64/README",
+                               "ext/pcbusb-darwin-x64/lib/<(mac_dylib)" ]
                 } ],
             ],
             "destination": "<(module_path)"
