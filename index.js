@@ -43,7 +43,12 @@ module.exports = class PcanUsb extends Duplex {
         resolve(pcan.ChannelInfo());
       } else if (process.platform == "darwin") {
         // If running on macOS, we fake it by resolving with an object we create
-        resolve([{channel_handle: 0x51}]);
+        resolve([{ channel_handle: 0x51,
+                   device_type: 5,
+                   controller_number: 0,
+                   device_features: 0,
+                   device_id: 0,
+                   channel_condition: 0 }]);
       }
       
     })
