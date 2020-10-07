@@ -1,6 +1,6 @@
 {
     "variables": {
-        "mac_dylib": "libPCBUSB.0.9.dylib"
+        "mac_dylib": "libPCBUSB.dylib"
     },
     "targets": [ {
         "target_name": "<(module_name)",
