@@ -10,12 +10,14 @@
 #include <assert.h>      // provide assert
 #include <node_api.h>    // provide N-API types, constants, and functions
 #include <stdio.h>       // provide printf
+#include <string.h>      // provide memcpy
+#include <stdlib.h>      // provide malloc and free
 
 #if defined _WIN32
 #include <windows.h>     // provide Win32 types, constants, and functions
 #include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
 #elif defined __APPLE__
-#include <PCUSB.h>       // provide PCAN-Basic types, constants, and functions
+#include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
 #endif
 
 #include "pcan.h"
@@ -1505,7 +1507,7 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
         return 0;
     }
 
-    ZeroMemory(pcanAttachedChannels, pcanAttachedChannels_sz);
+    memset(pcanAttachedChannels, 0, pcanAttachedChannels_sz);
 
     // Get channel list
     pcanStatus = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS,
