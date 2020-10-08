@@ -1010,6 +1010,7 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info)
 
 
 
+#if defined _WIN32
 napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
@@ -1082,6 +1083,23 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
 
     return result;
 }
+
+
+#elif defined __APPLE__
+napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+ 
+    // Create an N-API value for the result and return it
+    napi_value result;
+    status = napi_create_uint32(env, 0, &result);
+    assert(status == napi_ok);
+
+    return result;
+}
+
+
+#endif
 
 
 
@@ -1291,6 +1309,7 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info)
 
 
 
+#if defined _WIN32
 napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
@@ -1368,8 +1387,26 @@ napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
 }
 
 
+#elif defined __APPLE__
+napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    // Create an N-API value for the result and return it
+    napi_value result;
+    status = napi_create_uint32(env, 0, &result);
+    assert(status == napi_ok);
+
+    return result;    
+}
 
 
+#endif
+
+
+
+
+#if defined _WIN32
 napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 {
     napi_status status = napi_generic_failure;
@@ -1445,6 +1482,23 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 
     return result;    
 }
+
+
+#elif defined __APPLE__
+napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
+{
+    napi_status status = napi_generic_failure;
+
+    // Create an N-API value for the result and return it
+    napi_value result;
+    status = napi_create_uint32(env, 0, &result);
+    assert(status == napi_ok);
+
+    return result;    
+}
+
+
+#endif
 
 
 
