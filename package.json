@@ -2,6 +2,10 @@
   "name": "cs-pcan-usb",
   "version": "0.1.0",
   "description": "PCAN-USB module for NodeJS",
+  "os": [
+    "darwin",
+    "win32"
+  ],
   "main": "index.js",
   "private": true,
   "dependencies": {
