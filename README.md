@@ -4,11 +4,11 @@ This module provides a NodeJS interface to the [PEAK-System](https://www.peak-sy
 
 This module is meant to serve as a drop-in replacement for `can-usb-com`, allowing the PCAN-USB adapter to be used in place of [GridConnect CAN-USB-COM](https://www.gridconnect.com/products/usb-can-interface-can-usb-com).
 
-This module uses native code through N-API and is currently for Windows only.
+This module uses native code through N-API and currently supports Windows and macOS.
 
 ## Getting Started
 
-The following assumes that [NodeJS](https://nodejs.org) is already installed. This module was developed using Node v12.18.3 for Windows 10 x86_64.
+The following assumes that [NodeJS](https://nodejs.org) is already installed. This module was developed using Node v12.18.4 for Windows 10 x86_64 and macOS 10.15.6.
 
 To install this module, run:
 ```
@@ -90,6 +90,8 @@ let can = new Can({
 
 ### Filtering
 
+> :warning: Due to limitations of MacCAN and PCBUSB, CAN message filtering is not supported on macOS.
+
 By default, all CAN message are captured, but this can be limited by applying a message filter. The following are examples of filter definitions that are passed to the `open` method.
 
 ```js
@@ -115,6 +117,7 @@ By default, all CAN message are captured, but this can be limited by applying a 
 The PCAN-USB adapter effectively supports one message filter at a time. If multiple filters are applied, the resulting filter spans the range of the highest to lowest IDs of all filters.
 
 Three filter formats are supported by the package:
+
  - `code` and `mask` format, directly specifying the acceptance filter with a code and mask
 
         `code: 0x10EF0000, mask: 0xFFFF0000`
@@ -137,14 +140,17 @@ acceptance_mask = ~(fromID ^ toID)
 ```
 
 ### JavaScript Events
+
 The module emits the following events:
+
  - `open` when the serial port is successfully opened
- - `error` if an error occurs (like the serial port could not be opened)
+ - `error` if an error occurs
  - `data` when an incoming CAN bus frame is received
- - `write` when an outgoing CAN bus frame is sent to the device (the event occurs before the frame is actually put on the wire)
+ - `write` when an outgoing CAN bus frame is sent to the device (the event is emitted before the frame is actually sent on the bus)
  - `close` when the port is closed
 
 To listen for the events, use the typical NodeJS EventEmitter pattern:
+
 ```js
   can.on('open', function(){
     console.log( 'CAN bus opened');
@@ -166,18 +172,24 @@ To listen for the events, use the typical NodeJS EventEmitter pattern:
   can.on('error', function(err){
     console.log( 'CAN bus error: ', err );
   })
-
 ```
 
-### Win32 Events and Callbacks
+### Asynchronous Message Reception and Callbacks
 
-This module takes advantage of the native Win32 event that the PCAN-Basic API offers. When enabled, a Win32 event is signaled upon receipt of a CAN message that is accepted by the message filter (if enabled). This is accomplished by spawning a Win32 worker thread that waits on the event, invokes a callback function, and resets itself for the next message.
-
-This module implements a 'light' callback function in the native code, which simply calls the JavaScript function provided when the event is enabled using `pcan.EventEnable()`. The JavaScript function is then expected to call `pcan.Read()` to retrieve the newly received message through the API's `CAN_Read()` function.
+This module takes advantage of the asynchronous message receive notification offered by the PCAN-Basic API. It implements a 'light' callback function in the native code, which simply calls the JavaScript function provided when the event is enabled using `pcan.EventEnable()`. The JavaScript function is then expected to call `pcan.Read()` to retrieve the newly received message, which uses the API's `CAN_Read()` function behind-the-scenes.
 
 In the future, it may make sense to move the call to `CAN_Read()` directly into the native code to improve performance.
 
+#### Win32 Events
+
+The Windows version of this module provides a Win32 event to the PCAN-Basic API through the `CAN_SetValue(PCAN_RECEIVE_EVENT)` API call, which gets signaled upon receipt of a CAN message that is accepted by the message filter. A Win32 thread waits on the event using `WaitForMultipleObjects`, invokes a callback function when signaled, and resets itself for the next message.
+
+### Unix Pipes
+
+Under the MacCAN PCBUSB library, this module uses the read-end of a POSIX pipe, received through the `CAN_GetValue(PCAN_RECEIVE_EVENT)` API call. A POSIX thread waits for data to be written to the pipe using `select(2)`, invokes a callback function when signaled, and resets itself for the next message.
+
 ## API
+
 This module's API functions generally return Promises, which are resolved or rejected when a request is complete. 
 
 Refer to the [documentation on Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) for details on how to chain requests together, detect errors, etc. 
@@ -186,9 +198,9 @@ Refer to the PCAN-Basic documentation for details on the full API that this modu
 
 ## Development
 
-Please do the following before updating or modifying this package:
+Before updating or modifying this package, please
 
- - Please lint any changes using `eslint`.
+ - Lint any changes using `eslint`.
  - Confirm that unit tests pass, noting the exceptions described in the next section.
 
 In order to run unit tests (`npm test`), at least one PCAN-USB device must be connected to the computer.
@@ -197,9 +209,11 @@ The `pingpong` test is currently configured to use `cs-pcan-usb` for one adapter
 
 Do not run any tests on a bus with active traffic, since receiving unexpected CAN packets may confuse the tests.
 
-### Build Environment Setup - Windows 10 x86 64-bit
+### Build Environment Setup
+
+#### Windows 10 x86 64-bit
     
- 1. Install NodeJS. Version 12.18.3 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through the Command Prompt. If not, add the appropriate paths to the user's `PATH` environmental variable.
+ 1. Install NodeJS. Version 12.18.4 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through the Command Prompt. If not, add the appropriate paths to the user's `PATH` environment variable.
  1. Install the `windows-build-tools` Node package by running the following in an **administrative** Command Prompt or PowerShell window:
     `npm install -g windows-build-tools`
     Exit the administrative console after this completes and use a console with normal privileges for the rest of the setup
@@ -209,14 +223,40 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
     - `cd cs-pcan-usb\`
     - `npm install`
  1. Build:
+    - `node-gyp clean`
     - `node-pre-gyp configure`
     - `node-pre-gyp build`
- 1. Clean build directory:
+ 1. Test:
+    - `npm test`
+ 1. Clean build directory: (optional; perform as necessary)
     - `node-gyp clean`
+    
+#### macOS x86 64-bit
+
+ 1. Install NodeJS. Version 12.18.4 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through a Terminal session. If not, add the appropriate paths to the user's `PATH` environment variable.
+ 1. Install Xcode and the Command Line Tools using the App Store. Version 12.0.1 is known to work as of the time of writing.
+ 1. Clone the `cs-pcan-usb` repository:
+    `git clone https://github.com/csllc/cs-pcan-usb`
+ 1. Install dependencies:
+    - `cd cs-pcan-usb\`
+    - `npm install`
+ 1. Build:
+    - `node-gyp clean`
+    - `node-pre-gyp configure`
+    - `node-pre-gyp build`
+ 1. Test:
+    - `npm test`
+ 1. Clean build directory: (optional; perform as necessary)
+    - `node-gyp clean`
+
+
+#### Build Notes
 
 Depending on shell or executable path configuration, it may be necessary to use `npx` to execute `node-pre-gyp`.
 
-### Distribution
+If the test stage fails, useful error messages may be hidden by mocha. When tracking down a the cause of an error, running the example code directly, for example `node example/js/test.js`, may be helpful.
+
+## Distribution
 
 As part of the installation process, the platform-specific binary portion of the native addon is retrieved from a separate GitHub repository at [@csllc/cs-pcan-usb-binding](https://github.com/csllc/cs-pcan-usb-binding). This allows the `cs-pcan-usb` module to be installed on machines that do not have a full development environment set up to build it from source.
 
@@ -242,7 +282,8 @@ The following have been observed as potential sources of unexpected behavior in 
 
  - No error is thrown when the PCAN-USB dongle is unplugged while the module is running.
  - The PCAN-Basic API does not provide the means to enable a CAN adapter's loopback ("self-receive" or "echo") feature. This is instead simulated in `cs-pcan-usb` by pushing data passed to the write method back into the receive data stream. 
- - As a result of the above, the expected outcome of the test units (`npm test`) is that all pass except those in `filter.test.js` that test `should.not.emit('data')`.
+ - As a result of the above, the expected outcome of the test units (`npm test`) is that all pass except those in `filter.test.js` that test `should.not.emit('data')`. This does not indicate that the filter functionality does not work.
+ - The macOS build of this addon does not support filtering at all, and any attempts to use `pcan.FilterMessages`, `pcan.AcceptanceFilter11Bit`, and `pcanAcceptanceFilter29Bit` will fail.
 
 ### Untested Functionality
 
