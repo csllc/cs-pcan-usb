@@ -49,6 +49,10 @@ module.exports = class PcanUsb extends Duplex {
                    device_features: 0,
                    device_id: 0,
                    channel_condition: 0 }]);
+      } else {
+        // If running on Linux or any other platform, we return an empty channel
+        // list in an attempt to fail gracefully
+        resolve([]);
       }
       
     })
