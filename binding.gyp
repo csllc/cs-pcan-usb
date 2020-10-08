@@ -45,15 +45,16 @@
             ],
             "destination": "<(module_path)"
         } ],
-        "actions": [ {
-            "conditions": [
-                [ "OS=='mac'", {
+        "conditions": [
+            [ "OS=='mac'", {
+                
+                "actions": [ {
                     "action_name": "install_name_tool",
                     "inputs": [ "<(PRODUCT_DIR)/<(module_name).node" ],
                     "outputs": [ "" ],
                     "action": [ "install_name_tool", "-change", "<(mac_dylib_orig)", "@loader_path/<(mac_dylib)", "<(PRODUCT_DIR)/<(module_name).node" ]
                 } ]
-            ] }
+            } ]
         ]
     } ]
 }
