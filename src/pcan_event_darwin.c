@@ -16,9 +16,10 @@
 #include <windows.h>     // provide Win32 types, constants, and functions
 #include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
 #elif defined __APPLE__
+#include <errno.h>       // provide errno
 #include <pthread.h>     // provide pthread_create, pthread_join, and types
 #include <unistd.h>      // provide pipe
-#include <string.h>      // provide memcpy
+#include <string.h>      // provide memcpy and strerror
 #include <stdlib.h>      // provide malloc and free
 #include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
 #endif
@@ -219,9 +220,21 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(pcanPipeSpawn[R], &readfds);
+
+    struct timeval timeout = { 1, 0 }; // 1 second, 0 microseconds
     
+#ifdef PCAN_EVENT_DARWIN_DEBUG
     printf("pcanEventEnable: Waiting for thread to start...\n");
-    ret = select(pcanPipeSpawn[R]+1, &readfds, NULL, NULL, NULL);
+#endif
+
+    ret = select(pcanPipeSpawn[R]+1, &readfds, NULL, NULL, &timeout);
+    if (ret == -1)
+    {
+        printf("pcanEventEnable: Unable to veriy thread started; "
+               "error at select(): %s\n",
+               strerror(errno));
+        return 1;
+    }
 
     // Cleanup
     free(pcanEventThreadParams);
