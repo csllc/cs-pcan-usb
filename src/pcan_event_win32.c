@@ -72,7 +72,7 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
     memcpy(&threadParams, (threadParameters_t*)lpParam, sizeof(threadParams));
 
 #ifdef PCAN_EVENT_WIN32_DEBUG
-    pcanDumpThreadParametersWin32(&threadParams);
+    pcanDumpThreadParameters(&threadParams);
 #endif
 
     // Open thread-local handles for events
@@ -426,3 +426,17 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     return 0;
 }
 
+
+
+
+void pcanDumpThreadParameters(threadParameters_t *threadParameters)
+{
+    printf("threadParameters {\n"
+           "  canChannel  = 0x%02X\n"
+           "  callback    = %p\n"
+           "}\n",
+           threadParameters->canChannel,
+           threadParameters->callback);
+
+    return;
+}

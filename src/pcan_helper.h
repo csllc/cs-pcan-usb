@@ -82,14 +82,6 @@ void pcanDumpTimestampFD(TPCANTimestampFD timestamp);
 // given a parameter code defined in PCANBasic.h
 const char *pcanParameterLookup(TPCANParameter parameter);
 
-// Print the contents of a threadParameters_t structure to stdout in a
-// human-readable format for debugging purposes, for Windows
-void pcanDumpThreadParamsWin32(threadParameters_t *threadParameters);
-
-// Print the contents of a threadParameters_t structure to stdout in a
-// human-readable format for debugging purposes, for macOS
-void pcanDumpThreadParametersDarwin(threadParameters_t *threadParameters);
-
 // Return message size, in bytes, given a DLC code
 uint8_t pcanDLCDecode(uint8_t dlc);
 

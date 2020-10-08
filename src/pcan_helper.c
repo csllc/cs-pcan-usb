@@ -310,42 +310,6 @@ const char *pcanParameterLookup(TPCANParameter parameter)
     return parameterString;
 }
 
-    
-
-
-void pcanDumpThreadParametersWin32(threadParameters_t *threadParameters)
-{
-    printf("threadParameters {\n"
-           "  canChannel  = 0x%02X\n"
-           "  callback    = %p\n"
-           "}\n",
-           threadParameters->canChannel,
-           threadParameters->callback);
-
-    return;
-}
-
-
-
-
-void pcanDumpThreadParametersDarwin(threadParameters_t *threadParameters)
-{
-    printf("threadParameters {\n"
-           "  canChannel  = 0x%02X\n"
-           "  callback    = %p\n"
-           "  pipeRead    = %i\n"
-           "  pipeSpawn   = %i\n"
-           "  pipeExit    = %i\n"
-           "}\n",
-           threadParameters->canChannel,
-           threadParameters->callback,
-           threadParameters->pipeRead,
-           threadParameters->pipeSpawn,
-           threadParameters->pipeExit);
-
-    return;
-}
-
 
 
 

@@ -70,6 +70,10 @@ int pcanEventEnable(TPCANHandle pcan_Channel, void *callback);
 // Disable the previously enabled event
 int pcanEventDisable(TPCANHandle pcan_Channel);
 
+// Print the contents of a threadParameters_t structure to stdout in a
+// human-readable format for debugging purposes
+void pcanDumpThreadParameters(threadParameters_t *threadParameters);
+
 
 
 

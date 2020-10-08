@@ -87,7 +87,7 @@ void *pcanEventThreadProc(void *lpParam)
     memcpy(&threadParams, (threadParameters_t*)lpParam, sizeof(threadParams));
 
 #ifdef PCAN_EVENT_DARWIN_DEBUG
-    pcanDumpThreadParametersDarwin(&threadParams);
+    pcanDumpThreadParameters(&threadParams);
 #endif
 
     // Signal the spawn pipe, indicating that the worker thread is running
@@ -268,3 +268,25 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
 
     return 0;
 }
+
+
+
+
+void pcanDumpThreadParameters(threadParameters_t *threadParameters)
+{
+    printf("threadParameters {\n"
+           "  canChannel  = 0x%02X\n"
+           "  callback    = %p\n"
+           "  pipeRead    = %i\n"
+           "  pipeSpawn   = %i\n"
+           "  pipeExit    = %i\n"
+           "}\n",
+           threadParameters->canChannel,
+           threadParameters->callback,
+           threadParameters->pipeRead,
+           threadParameters->pipeSpawn,
+           threadParameters->pipeExit);
+
+    return;
+}
+
