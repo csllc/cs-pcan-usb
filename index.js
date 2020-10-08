@@ -38,7 +38,19 @@ module.exports = class PcanUsb extends Duplex {
     var me = this;
 
     return new Promise(function(resolve) {
-      resolve(pcan.ChannelInfo());
+      if (process.platform == "win32") {
+        // If running on Windows, get channel data through the ChannelInfo method
+        resolve(pcan.ChannelInfo());
+      } else if (process.platform == "darwin") {
+        // If running on macOS, we fake it by resolving with an object we create
+        resolve([{ channel_handle: 0x51,
+                   device_type: 5,
+                   controller_number: 0,
+                   device_features: 0,
+                   device_id: 0,
+                   channel_condition: 0 }]);
+      }
+      
     })
       .then(function(channels) {
         // For compatibility, create a new property 'path' that is the
@@ -55,7 +67,7 @@ module.exports = class PcanUsb extends Duplex {
       });
   }
 
-  open(port) {
+  open(port) { 
     var me = this;
 
     return new Promise(function(resolve) {
@@ -83,7 +95,9 @@ module.exports = class PcanUsb extends Duplex {
         });
 
         // Enable busoff auto-reset
-        pcan.SetValue(port, 0x07, Buffer.from([0x01]));
+        if (process.platform == "win32") {
+          pcan.SetValue(port, 0x07, Buffer.from([0x01]));
+        }
 
       })
       .catch(function(err) {

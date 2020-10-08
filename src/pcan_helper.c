@@ -6,13 +6,21 @@
    Copyright (c) 2020 Control Solutions LLC. All rights reserved.
 */
 
-#include <PCANBasic.h>     // provide PCAN-Basic constants and types
+#if defined _WIN32
+#include <windows.h>     // provide Win32 types, constants, and functions
+#include <PCANBasic.h>   // provide PCAN-Basic types, constants, and functions
+#elif defined __APPLE__
+#include <PCBUSB.h>      // provide PCAN-Basic types, constants, and functions
+#endif
+
 #include <stdint.h>        // provide uintX_t
 #include <stdio.h>         // provide printf
 
 #include "common_helper.h" // provide lookupString
 #include "pcan_helper.h"
-#include "pcan_event.h"    // provide threadParameters_t
+#if defined _WIN32
+#include "pcan_event_win32.h"    // provide threadParameters_t
+#endif
 
 
 // ----------------------------------- // -----------------------------------
@@ -231,19 +239,19 @@ void pcanDumpMsgFD(TPCANMsgFD *msg)
 
 void pcanDumpBuffer(BYTE *buffer, size_t bufferLength)
 {
-    int i;
+    unsigned int i;
 
     printf("{");
 
     for (i = 0; i < bufferLength; i++)
     {
-	printf("0x%02X", buffer[i]);
-	if (i != (bufferLength - 1))
-	{
-	    printf(", ");
-	}
-	// Print comma following data byte only if not second-to-last
-	// byte in byte
+        printf("0x%02X", buffer[i]);
+        if (i != (bufferLength - 1))
+        {
+            printf(", ");
+        }
+        // Print comma following data byte only if not second-to-last
+        // byte in byte
     }
 
     printf("}");
@@ -305,14 +313,35 @@ const char *pcanParameterLookup(TPCANParameter parameter)
     
 
 
-void pcanDumpThreadParameters(threadParameters_t *threadParameters)
+void pcanDumpThreadParametersWin32(threadParameters_t *threadParameters)
 {
     printf("threadParameters {\n"
-	   "  canChannel = 0x%02X\n"
-	   "  callback = %p\n"
-	   "}\n",
-	   threadParameters->canChannel,
-	   threadParameters->callback);
+           "  canChannel  = 0x%02X\n"
+           "  callback    = %p\n"
+           "}\n",
+           threadParameters->canChannel,
+           threadParameters->callback);
+
+    return;
+}
+
+
+
+
+void pcanDumpThreadParametersDarwin(threadParameters_t *threadParameters)
+{
+    printf("threadParameters {\n"
+           "  canChannel  = 0x%02X\n"
+           "  callback    = %p\n"
+           "  pipeRead    = %i\n"
+           "  pipeSpawn   = %i\n"
+           "  pipeExit    = %i\n"
+           "}\n",
+           threadParameters->canChannel,
+           threadParameters->callback,
+           threadParameters->pipeRead,
+           threadParameters->pipeSpawn,
+           threadParameters->pipeExit);
 
     return;
 }

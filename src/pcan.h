@@ -15,13 +15,13 @@
 // Uncomment to enable debugging messages, which may affect timing or
 // performance
 
-//#define PCAN_WIN32_ONLY
+//#define PCAN_NO_NAPI
 // Uncomment to disable declarations for functions that use N-API.
 // This is required when compiling test programs that rely solely on the Win32
 // and PCAN-Basic APIs.
 
 
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 #include <node_api.h> // provide N-API types
 #endif
 
@@ -72,14 +72,14 @@ void pcan_CAN_EventCallback(int channel);
 
 
 // Initialize N-API module
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value Init(napi_env env, napi_value exports);
 #endif
 
 
 // Dummy finalize callback for the threadsafe function used by
 // pcan_CAN_EventCallback
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 void pcan_CAN_EventFinalize(napi_env env, void* finalize_data, void* finalize_hint);
 #endif
 
@@ -96,7 +96,7 @@ void pcan_CAN_EventFinalize(napi_env env, void* finalize_data, void* finalize_hi
 // Note that this does not accept additional arguments for non-PnP CAN adapters
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info);
 #endif
 
@@ -107,7 +107,7 @@ napi_value pcan_CAN_Initialize(napi_env env, napi_callback_info info);
 // - TPCANBitrateFD BitrateFD (string)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info);
 #endif
 
@@ -117,7 +117,7 @@ napi_value pcan_CAN_InitializeFD(napi_env env, napi_callback_info info);
 // - TPCANHandle Channel (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info);
 #endif
 
@@ -127,7 +127,7 @@ napi_value pcan_CAN_Uninitialize(napi_env env, napi_callback_info info);
 // - TPCANHandle Channel (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info);
 #endif
 
@@ -136,7 +136,7 @@ napi_value pcan_CAN_Reset(napi_env env, napi_callback_info info);
 // Arguments passed through N-API:
 // - TPCANHandle Channel (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_GetStatus(napi_env env, napi_callback_info info);
 #endif
 
@@ -147,7 +147,7 @@ napi_value pcan_CAN_GetStatus(napi_env env, napi_callback_info info);
 // - TPCANHandle Channel (uint32)
 // Returns N-API object containing 'message' and 'timestamp' objects,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_Read(napi_env env, napi_callback_info info);
 #endif
 
@@ -158,7 +158,7 @@ napi_value pcan_CAN_Read(napi_env env, napi_callback_info info);
 // - TPCANHandle Channel (uint32)
 // Returns N-API object containing 'message' and 'timestamp' objects,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info);
 #endif
 
@@ -169,7 +169,7 @@ napi_value pcan_CAN_ReadFD(napi_env env, napi_callback_info info);
 // - TPCANMsg *MessageBuffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_Write(napi_env env, napi_callback_info info);
 #endif
 
@@ -180,7 +180,7 @@ napi_value pcan_CAN_Write(napi_env env, napi_callback_info info);
 // - TPCANMsgFD *MessageBuffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info);
 #endif
 
@@ -193,7 +193,7 @@ napi_value pcan_CAN_WriteFD(napi_env env, napi_callback_info info);
 // - void *Buffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure. Parameter value is returned in Buffer.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info);
 #endif
 
@@ -205,7 +205,7 @@ napi_value pcan_CAN_GetValue(napi_env env, napi_callback_info info);
 // - void *Buffer (buffer)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error si thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info);
 #endif
 
@@ -218,7 +218,7 @@ napi_value pcan_CAN_SetValue(napi_env env, napi_callback_info info);
 // - TPCANMode Mode (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info);
 #endif
 
@@ -228,7 +228,7 @@ napi_value pcan_CAN_FilterMessages(napi_env env, napi_callback_info info);
 // - TPCANStatus Error (uint32)
 // - WORD Language (uint32)
 // Returns error text as string wrapped as napi_value. Error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info);
 #endif
 
@@ -241,7 +241,7 @@ napi_value pcan_CAN_GetErrorText(napi_env env, napi_callback_info info);
 // - function callback (N-API)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info);
 #endif
 
@@ -251,7 +251,7 @@ napi_value pcan_CAN_EnableEvent(napi_env env, napi_callback_info info);
 // - TPCANHandle Channel (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info);
 #endif
 
@@ -264,7 +264,7 @@ napi_value pcan_CAN_DisableEvent(napi_env env, napi_callback_info info);
 // - DWORD AcceptanceMask (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info);
 #endif
 
@@ -277,7 +277,7 @@ napi_value pcan_CAN_AcceptanceFilter11Bit(napi_env env, napi_callback_info info)
 // - DWORD AcceptanceMask (uint32)
 // Returns TPCANStatus from PCAN-Basic API call, wrapped in napi_value,
 // and error is thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info);
 #endif
 
@@ -287,7 +287,7 @@ napi_value pcan_CAN_AcceptanceFilter29Bit(napi_env env, napi_callback_info info)
 // - (none)
 // Returns N-API array of TPCANChannelInfo-like objects, or upon failure. Error
 // may be thrown upon failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info);
 #endif
 
@@ -297,7 +297,7 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info);
 // Arguments passed through N-API:
 // - uint32_t baud (uint32)
 // Returns uint32 constant on success or 0 on failure.
-#ifndef PCAN_WIN32_ONLY
+#ifndef PCAN_NO_NAPI
 napi_value pcan_CAN_TranslateBaud(napi_env env, napi_callback_info info);
 #endif
 

@@ -236,7 +236,7 @@ const char *napiValuetypeLookup(napi_valuetype valuetype)
 
 bool napiCheck(napi_env env, napi_status status)
 {
-    napi_extended_error_info *errorInfo = NULL;
+    const napi_extended_error_info *errorInfo = NULL;
     bool exceptionPending = false;
 
     if (status != napi_ok)
@@ -259,7 +259,7 @@ bool napiCheck(napi_env env, napi_status status)
 
 
 
-void napiDumpErrorInfo(napi_extended_error_info *errorInfo)
+void napiDumpErrorInfo(const napi_extended_error_info *errorInfo)
 {
     printf("errorInfo {\n"
 	   "  error_message = \"%s\"\n"

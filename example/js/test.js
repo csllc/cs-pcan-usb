@@ -18,6 +18,9 @@ can.list()
                 ext: true,
                 buf: Buffer.from([0x45, 0x00, 0x00, 0x04, 0x00, 0x00]) });
   })
+//  .then(() => {
+//    can.close();
+//  })
   .catch((err) => {
     console.error(err);
     can.close();
