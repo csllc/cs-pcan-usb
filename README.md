@@ -184,7 +184,7 @@ In the future, it may make sense to move the call to `CAN_Read()` directly into 
 
 The Windows version of this module provides a Win32 event to the PCAN-Basic API through the `CAN_SetValue(PCAN_RECEIVE_EVENT)` API call, which gets signaled upon receipt of a CAN message that is accepted by the message filter. A Win32 thread waits on the event using `WaitForMultipleObjects`, invokes a callback function when signaled, and resets itself for the next message.
 
-### Unix Pipes
+#### Unix Pipes
 
 Under the MacCAN PCBUSB library, this module uses the read-end of a POSIX pipe, received through the `CAN_GetValue(PCAN_RECEIVE_EVENT)` API call. A POSIX thread waits for data to be written to the pipe using `select(2)`, invokes a callback function when signaled, and resets itself for the next message.
 
