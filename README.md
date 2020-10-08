@@ -283,7 +283,7 @@ The following have been observed as potential sources of unexpected behavior in 
  - No error is thrown when the PCAN-USB dongle is unplugged while the module is running.
  - The PCAN-Basic API does not provide the means to enable a CAN adapter's loopback ("self-receive" or "echo") feature. This is instead simulated in `cs-pcan-usb` by pushing data passed to the write method back into the receive data stream. 
  - As a result of the above, the expected outcome of the test units (`npm test`) is that all pass except those in `filter.test.js` that test `should.not.emit('data')`. This does not indicate that the filter functionality does not work.
- - The macOS build of this addon does not support filtering at all, and any attempts to use `pcan.FilterMessages`, `pcan.AcceptanceFilter11Bit`, and `pcanAcceptanceFilter29Bit` will fail.
+ - The macOS build of this addon does not support filtering at all, and any attempts to use `pcan.FilterMessages`, `pcan.AcceptanceFilter11Bit`, and `pcan.AcceptanceFilter29Bit` will fail silently.
 
 ### Untested Functionality
 
