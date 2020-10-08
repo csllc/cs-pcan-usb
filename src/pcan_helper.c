@@ -189,19 +189,19 @@ const char *pcanStatusLookup(TPCANStatus status)
 void pcanDumpMsg(TPCANMsg *msg)
 {
     printf("msg { \n"
-	     "  ID = 0x%02X\n"
-	     "  MSGTYPE = 0x%02X (%s)\n"
-	     "  LEN = 0x%02X\n"
-	     "  DATA = ",
-	   msg->ID,
-	   msg->MSGTYPE,
-	   pcanMsgtypeLookup(msg->MSGTYPE),
-	   msg->LEN);
+           "  ID = 0x%02X\n"
+           "  MSGTYPE = 0x%02X (%s)\n"
+           "  LEN = 0x%02X\n"
+           "  DATA = ",
+           msg->ID,
+           msg->MSGTYPE,
+           pcanMsgtypeLookup(msg->MSGTYPE),
+           msg->LEN);
 
     pcanDumpBuffer(msg->DATA, msg->LEN);
     
     printf("\n"
-	   "}\n");
+           "}\n");
 
     return;
 }
@@ -216,20 +216,20 @@ void pcanDumpMsgFD(TPCANMsgFD *msg)
     msgLength = pcanDLCDecode(msg->DLC);
 
     printf("msg_fd {\n"
-	   "  ID = 0x%02X\n"
-	   "  MSGTYPE = 0x%02X (%s)\n"
-	   "  DLC = 0x%02X (0x%02X bytes)\n"
-	   "  DATA = ",
-	   msg->ID,
-	   msg->MSGTYPE,
-	   pcanMsgtypeLookup(msg->MSGTYPE),
-	   msg->DLC,
-	   msgLength);
+           "  ID = 0x%02X\n"
+           "  MSGTYPE = 0x%02X (%s)\n"
+           "  DLC = 0x%02X (0x%02X bytes)\n"
+           "  DATA = ",
+           msg->ID,
+           msg->MSGTYPE,
+           pcanMsgtypeLookup(msg->MSGTYPE),
+           msg->DLC,
+           msgLength);
 
     pcanDumpBuffer(msg->DATA, msgLength);
 
     printf("\n"
-	   "}\n");
+           "}\n");
 
     return;
 }
@@ -277,13 +277,13 @@ const char *pcanMsgtypeLookup(TPCANMessageType msgtype)
 void pcanDumpTimestamp(TPCANTimestamp *timestamp)
 {
     printf("timestamp {\n"
-	   "  millis = %i\n"
-	   "  millis_overflow = %i\n"
-	   "  micros = %i\n"
-	   "}\n",
-	   timestamp->millis,
-	   timestamp->millis_overflow,
-	   timestamp->micros);
+           "  millis = %i\n"
+           "  millis_overflow = %i\n"
+           "  micros = %i\n"
+           "}\n",
+           timestamp->millis,
+           timestamp->millis_overflow,
+           timestamp->micros);
 
     return;
 }
@@ -317,32 +317,35 @@ uint8_t pcanDLCDecode(uint8_t dlc)
 {
     int len;
 
-    if (dlc <= 8) {
-	len = dlc;
-    } else {
-	switch (dlc) {
-	case 9:
-	    len = 12;
-	    break;
-	case 10:
-	    len = 16;
-	    break;
-	case 11:
-	    len = 20;
-	    break;
-	case 12:
-	    len = 24;
-	    break;
-	case 13:
-	    len = 32;
-	    break;
-	case 14:
-	    len = 48;
-	    break;
-	case 15:
-	    len = 64;
-	    break;
-	}
+    if (dlc <= 8)
+    {
+        len = dlc;
+    }
+    else
+    {
+        switch (dlc) {
+        case 9:
+            len = 12;
+            break;
+        case 10:
+            len = 16;
+            break;
+        case 11:
+            len = 20;
+            break;
+        case 12:
+            len = 24;
+            break;
+        case 13:
+            len = 32;
+            break;
+        case 14:
+            len = 48;
+            break;
+        case 15:
+            len = 64;
+            break;
+        }
     }
 
     return len;
@@ -354,22 +357,22 @@ uint8_t pcanDLCDecode(uint8_t dlc)
 void pcanDumpChannelInfo(TPCANChannelInformation *info)
 {
     printf("TPCANChannelInfo {\n"
-	   "  channel_handle    = 0x%02X\n"
-	   "  device_type       = 0x%02X (%s)\n"
-	   "  controller_number = 0x%02X\n"
-	   "  device_features   = 0x%02X\n"
-	   "  device_name       = \"%s\"\n"
-	   "  device_id         = 0x%02X\n"
-	   "  channel_condition = 0x%02X\n"
-	   "}\n",
-	   info->channel_handle,
-	   info->device_type,
-	   pcanDeviceTypeLookup(info->device_type),
-	   info->controller_number,
-	   info->device_features,
-	   info->device_name,
-	   info->device_id,
-	   info->channel_condition);
+           "  channel_handle    = 0x%02X\n"
+           "  device_type       = 0x%02X (%s)\n"
+           "  controller_number = 0x%02X\n"
+           "  device_features   = 0x%02X\n"
+           "  device_name       = \"%s\"\n"
+           "  device_id         = 0x%02X\n"
+           "  channel_condition = 0x%02X\n"
+           "}\n",
+           info->channel_handle,
+           info->device_type,
+           pcanDeviceTypeLookup(info->device_type),
+           info->controller_number,
+           info->device_features,
+           info->device_name,
+           info->device_id,
+           info->channel_condition);
 
     return;
 }
@@ -395,50 +398,50 @@ int pcanTranslateBaud(uint32_t baudInt)
 
     switch (baudInt) {
     case 1000000: // 1M
-	translated = PCAN_BAUD_1M;
-	break;
+        translated = PCAN_BAUD_1M;
+        break;
     case 800000: // 800k
-	translated = PCAN_BAUD_800K;
-	break;
+        translated = PCAN_BAUD_800K;
+        break;
     case 500000: // 500k
-	translated = PCAN_BAUD_500K;
-	break;
+        translated = PCAN_BAUD_500K;
+        break;
     case 250000: // 250k
-	translated = PCAN_BAUD_250K;
-	break;
+        translated = PCAN_BAUD_250K;
+        break;
     case 125000: // 125k
-	translated = PCAN_BAUD_125K;
-	break;
+        translated = PCAN_BAUD_125K;
+        break;
     case 100000: // 100k
-	translated = PCAN_BAUD_100K;
-	break;
+        translated = PCAN_BAUD_100K;
+        break;
     case 95000: // 95k
-	translated = PCAN_BAUD_95K;
-	break;
+        translated = PCAN_BAUD_95K;
+        break;
     case 83000: // 83k
-	translated = PCAN_BAUD_83K;
-	break;
+        translated = PCAN_BAUD_83K;
+        break;
     case 50000: // 50k
-	translated = PCAN_BAUD_50K;
-	break;
+        translated = PCAN_BAUD_50K;
+        break;
     case 47000: // 47k
-	translated = PCAN_BAUD_47K;
-	break;
+        translated = PCAN_BAUD_47K;
+        break;
     case 33000: // 33k
-	translated = PCAN_BAUD_33K;
-	break;
+        translated = PCAN_BAUD_33K;
+        break;
     case 20000: // 20k
-	translated = PCAN_BAUD_20K;
-	break;
+        translated = PCAN_BAUD_20K;
+        break;
     case 10000: // 10k
-	translated = PCAN_BAUD_10K;
-	break;
+        translated = PCAN_BAUD_10K;
+        break;
     case 5000: // 5k
-	translated = PCAN_BAUD_5K;
-	break;
+        translated = PCAN_BAUD_5K;
+        break;
     default:
-	translated = 0; // Unknown
-	break;
+        translated = 0; // Unknown
+        break;
     }
 
     return translated;
