@@ -9,8 +9,8 @@ can.list()
     console.log(ports);
     return can.open(ports[0].path)
       .catch((err) => {
-	console.error(err);
-	process.exit(1);
+	    console.error(err);
+	    process.exit(1);
       });
   })
   .then(() => {

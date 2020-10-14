@@ -1596,6 +1596,7 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
     {
         // Create N-API object for array element
         status = napi_create_object(env, &channelInfoElement);
+        assert(status == napi_ok);
 
         // Assign properties
         // - Channel handle

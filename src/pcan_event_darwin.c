@@ -129,10 +129,6 @@ void *pcanEventThreadProc(void *lpParam)
         }
         else if (FD_ISSET(threadParams.pipeExit, &readfds))
         {
-            // Clean up and exit thread
-#ifdef PCAN_EVENT_DARWIN_DEBUG
-            printf("pcanEventThreadProc: Exiting thread.\n");
-#endif
             threadExit = 1;
         }
         else
@@ -143,7 +139,10 @@ void *pcanEventThreadProc(void *lpParam)
         }
     }
 
-    printf("pcanThreadProc: Exiting.\n");
+#ifdef PCAN_EVENT_DARWIN_DEBUG
+    printf("pcanEventThreadProc: Exiting.\n");
+#endif
+
     return 0;
 }
 

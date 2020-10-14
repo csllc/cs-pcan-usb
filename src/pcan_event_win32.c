@@ -117,7 +117,7 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
     ret = SetEvent(pcanEventSpawn);
     if (ret == 0)
     {
-        printf("pcanEventThreadProc: Error at SetEvent (0x%02X)\n", GetLastError());
+        printf("pcanEventThreadProc: Error at SetEvent: 0x%02X\n", GetLastError());
         return 1;
     }
     
@@ -163,16 +163,17 @@ DWORD WINAPI pcanEventThreadProc(LPVOID lpParam)
                 (threadParams.callback)(threadParams.canChannel);
                 break;
             case EVENT_INDEX_EXIT: // Clean up and exit thread
-#ifdef PCAN_EVENT_WIN32_DEBUG
-                printf("pcanEventThreadProc: Exiting thread\n");
-#endif
-                CloseHandle(pcanEventRead);
-                CloseHandle(pcanEventSpawn);
-                CloseHandle(pcanEventExit);
                 threadExit = 1;
             }
         }
     }
+
+#ifdef PCAN_EVENT_WIN32_DEBUG
+    printf("pcanEventThreadProc: Exiting thread\n");
+#endif
+    CloseHandle(pcanEventRead);
+    CloseHandle(pcanEventSpawn);
+    CloseHandle(pcanEventExit);
 
     return 0;
 }
@@ -225,7 +226,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
     if (pcanEventRead == 0)
     {
-        printf("pcanEventEnable: Error at CreateEvent (pcanEventRead) (0x%02X)",
+        printf("pcanEventEnable: Error at CreateEvent (pcanEventRead): 0x%02X\n",
                GetLastError());
         return 1;
     }
@@ -238,7 +239,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
     if (pcanEventSpawn == 0)
     {
-        printf("pcanEventEnable: Error at CreateEvent (pcanEventSpawn) (0x%02X)",
+        printf("pcanEventEnable: Error at CreateEvent (pcanEventSpawn): 0x%02X\n",
                GetLastError());
         return 1;
     }
@@ -251,7 +252,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
     if (pcanEventExit == 0)
     {
-        printf("pcanEventEnable: Error at CreateEvent (pcanEventExit) (0x%02X)",
+        printf("pcanEventEnable: Error at CreateEvent (pcanEventExit): 0x%02X\n",
                GetLastError());
         return 1;
     }
@@ -272,11 +273,11 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
 
     if (pcanEventThread == 0)
     {
-        printf("pcanEventEnable: Error at CreateThread (0x%02X)", GetLastError());
+        printf("pcanEventEnable: Error at CreateThread: 0x%02X\n", GetLastError());
         return 1;
     }
 
-    // Wait for pcanThread_event to be set, indicating that the thread
+    // Wait for pcanEventSpawn to be set, indicating that the thread
     // was successfully started
 #ifdef PCAN_EVENT_WIN32_DEBUG
     printf("pcanEventEnable: Waiting for worker thread to start...\n");
@@ -294,7 +295,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
         printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
         return 1;
     case WAIT_FAILED:
-        printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_FAILED (0x%02X)\n",
+        printf("pcanEventEnable: Error at WaitForSingleObject: WAIT_FAILED: 0x%02X\n",
                GetLastError());
         return 1;
     default:
@@ -336,7 +337,7 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     ret = SetEvent(pcanEventExit);
     if (ret == 0)
     {
-        printf("pcanEventDisable: Error at SetEvent (0x%02X)\n",
+        printf("pcanEventDisable: Error at SetEvent: 0x%02X\n",
                GetLastError());
         return 1;
     }
@@ -382,7 +383,7 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
         printf("pcanEventDisable: Error at WaitForSingleObject: WAIT_TIMEOUT\n");
         return 1;
     case WAIT_FAILED:
-        printf("pcanEventDisable: Error at WaitForSingleObject: WAIT_FAILED (0x%02X)\n",
+        printf("pcanEventDisable: Error at WaitForSingleObject: WAIT_FAILED: 0x%02X\n",
                GetLastError());
         return 1;
     default:
@@ -418,7 +419,7 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     ret = CloseHandle(pcanEventThread);
     if (ret == 0)
     {
-        printf("pcanEventDisable: Error at CloseHandle(pcanThread): %i\n",
+        printf("pcanEventDisable: Error at CloseHandle(pcanEventThread): %i\n",
                GetLastError());
         return 1;
     }
@@ -433,7 +434,7 @@ void pcanDumpThreadParameters(threadParameters_t *threadParameters)
 {
     printf("threadParameters {\n"
            "  canChannel  = 0x%02X\n"
-           "  callback    = %p\n"
+           "  callback    = 0x%p\n"
            "}\n",
            threadParameters->canChannel,
            threadParameters->callback);
