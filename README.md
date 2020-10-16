@@ -114,7 +114,7 @@ By default, all CAN message are captured, but this can be limited by applying a 
 
 ```
 
-The PCAN-USB adapter effectively supports one message filter at a time. If multiple filters are applied, the resulting filter spans the range of the highest to lowest IDs of all filters.
+The PCAN-USB adapter supports one message filter at a time. If multiple filters are applied, the resulting filter spans the range of the highest to lowest IDs of all filters.
 
 Three filter formats are supported by the package:
 
@@ -138,6 +138,21 @@ Given a range of IDs to allow, it is possible to convert to an acceptance code a
 acceptance_code = fromID & toID
 acceptance_mask = ~(fromID ^ toID)
 ```
+
+#### Mixing Filter Types
+
+Internally, the PCAN-USB adapter does not differentiate between standard and extended ID filtering. The `ext` property is only made available for compatibility with `can-usb-com` and `cs-canlib`. 
+
+As such, a filer specification like
+
+```js
+{ ext: true, id: '00000000 FFFFFFFFF' }
+```
+
+will allow all messages with standard IDs (`000` through `7FF`) through to the receive buffer. This **is not** consistent with `can-usb-com` or `cs-canlib`, which follow [CAN-USB-COM's specification](https://gridconnect.box.com/shared/static/c7l5u2vgsid1a24y6r0a0wv5hwaunr71.pdf):
+ - When [filtering is] disabled, all CAN messages are received regardless of the definitions in the list
+ - When [filtering is] enabled, only messages which match filter definitions in the list will be passed through.
+
 
 ### JavaScript Events
 
@@ -215,8 +230,8 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
     
  1. Install NodeJS. Version 12.18.4 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through the Command Prompt. If not, add the appropriate paths to the user's `PATH` environment variable.
  1. Install the `windows-build-tools` Node package by running the following in an **administrative** Command Prompt or PowerShell window:
-    `npm install -g windows-build-tools`
-    Exit the administrative console after this completes and use a console with normal privileges for the rest of the setup
+    - `npm install -g windows-build-tools`
+ 1. Exit the administrative console after this completes and use a console with normal privileges for the rest of the setup
  1. Clone the `cs-pcan-usb` repository:
     `git clone https://github.com/csllc/cs-pcan-usb`
  1. Install dependencies:
@@ -254,7 +269,9 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
 
 Depending on shell or executable path configuration, it may be necessary to use `npx` to execute `node-pre-gyp`.
 
-If the test stage fails, useful error messages may be hidden by mocha. When tracking down a the cause of an error, running the example code directly, for example `node example/js/test.js`, may be helpful.
+If the test stage fails, useful error messages may be hidden by `mocha`. When tracking down a the cause of an error, running the example code directly, for example `node example/js/test.js`, may be helpful.
+
+It may also be helpful to recompile the module with `CANLIB_DEBUG` and `CANLIB_EVENT_DEBUG` defined to enable debugging messages.
 
 ## Distribution
 
@@ -284,6 +301,7 @@ The following have been observed as potential sources of unexpected behavior in 
  - The PCAN-Basic API does not provide the means to enable a CAN adapter's loopback ("self-receive" or "echo") feature. This is instead simulated in `cs-pcan-usb` by pushing data passed to the write method back into the receive data stream. 
  - As a result of the above, the expected outcome of the test units (`npm test`) is that all pass except those in `filter.test.js` that test `should.not.emit('data')`. This does not indicate that the filter functionality does not work.
  - The macOS build of this addon does not support filtering at all, and any attempts to use `pcan.FilterMessages`, `pcan.AcceptanceFilter11Bit`, and `pcan.AcceptanceFilter29Bit` will fail silently.
+ - The PCAN-USB adapter does not differentiate between extended and standard filters; see the notes under Filtering, above.
 
 ### Untested Functionality
 
