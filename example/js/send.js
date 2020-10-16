@@ -8,13 +8,8 @@
 const Can = require('../..');
 
 let board = new Can({
-  canRate: 500000,
-  filters: [{
-      ext: true,
-      id: '10EF0000 10EFFFFF',
-    }
-
-  ]
+  canRate: 250000,
+  filters: [ { ext: true, id: '10EF0000 10EFFFFF' } ]
 });
 
 

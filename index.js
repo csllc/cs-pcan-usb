@@ -212,12 +212,9 @@ module.exports = class PcanUsb extends Duplex {
     if (me.options.filters.length > 0) {
       // Ensure extended/standard filters aren't being mixed, because this
       // isn't supported by the PCAN-USB hardware.
-      let ext_option = me.options.filters[0].ext;
-
-      for (let i in me.options.filters) {
-        if (me.options.filters[i].ext != ext_option) {
-          throw new Error("PCAN-USB does not support mixing extended and standard filters.");
-        }
+      if ((me.options.filters.some((f) => { return (f.ext == true); })) &&
+          (me.options.filters.some((f) => { return (f.ext == false); }))) {
+        throw new Error("PCAN-USB does not support mixing extended and standard filters.");
       }
       
       for (let i in me.options.filters) {
