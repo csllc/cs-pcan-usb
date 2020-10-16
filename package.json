@@ -1,9 +1,8 @@
 {
-  "name": "cs-pcan-usb",
+  "name": "@csllc/cs-pcan-usb",
   "version": "0.1.0",
   "description": "PCAN-USB module for NodeJS",
   "main": "index.js",
-  "private": true,
   "dependencies": {
     "@csllc/j1939": "^1.0.0",
     "bindings": "~1.2.1",
