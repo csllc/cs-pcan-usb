@@ -19,7 +19,7 @@ module.exports = class PcanUsb extends Duplex {
 
   constructor(options) {
 
-    super({ objectMode: true});
+    super({ objectMode: true });
 
     this.setOptions(options);
     this.requestQueue = [];
@@ -40,7 +40,11 @@ module.exports = class PcanUsb extends Duplex {
     return new Promise(function(resolve) {
       if (process.platform == "win32") {
         // If running on Windows, get channel data through the ChannelInfo method
-        resolve(pcan.ChannelInfo());
+        try {
+          resolve(pcan.ChannelInfo());
+        } catch {
+          resolve([]);
+        }
       } else if (process.platform == "darwin") {
         // If running on macOS, we fake it by resolving with an object we create
         resolve([{ channel_handle: 0x51,
@@ -191,7 +195,7 @@ module.exports = class PcanUsb extends Duplex {
     
     try {
       let read_obj = pcan.Read(me.port);
-      me.push(tpcan.toMsg(read_obj.message)) // Emits 'data' event
+      me.push(tpcan.toMsg(read_obj.message)); // Emits 'data' event
     } catch(err) {
       if (err.code != "PCAN_ERROR_QRCVEMPTY") {
         console.error(err.code);
