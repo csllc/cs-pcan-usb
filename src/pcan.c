@@ -396,7 +396,7 @@ napi_value pcan_CAN_GetStatus(napi_env env, napi_callback_info info)
 
     // Create a N-API value for the status and return it
     napi_value can_status;
-    status = napi_create_bigint_uint64(env, pcan_can_status, &can_status);
+    status = napi_create_uint32(env, pcan_can_status, &can_status);
     assert(status == napi_ok);
 
     return can_status;
