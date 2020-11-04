@@ -18,13 +18,44 @@ const DEFAULT_OPTIONS = {
 module.exports = class PcanUsb extends Duplex {
 
   constructor(options) {
-
     super({ objectMode: true });
+
+    let me = this;
 
     this.setOptions(options);
     this.requestQueue = [];
     this.port = null;
     this.isReady = false;
+
+    this.status = {
+      code: undefined,
+      string: "",
+      isError: false,
+      notify() {
+        let status = { code: this.code, string: this.string, isError: this.isError };
+        me.emit('status', status );
+        console.debug(status);
+      },
+      get statusCode() { return this.code; },
+      set statusCode(code) {
+        let same = (this.code === code) ? true : false;
+        if (!same) {
+          this.code = code;
+          if (this.code == 0) {
+            this.string = "Bus OK";
+            this.isError = false;
+          } else {
+            this.isError = true;
+            try {
+              this.string = pcan.GetErrorText(code, 0);
+            } catch(err) {
+              console.error(err);
+            }
+          }
+          this.notify();
+        }
+      }
+    }
   }
 
   // Sets (or re-sets) the configuration options
@@ -146,11 +177,15 @@ module.exports = class PcanUsb extends Duplex {
   write(msg) {
     let me = this;
     
-    return new Promise(function(resolve) {
+    return new Promise(function(resolve, reject) {
       if (msg.buf.length <= 8) {
         let tpcan_buffer = tpcan.toTPCANMsg(msg);
         // Write message to bus
-        pcan.Write(me.port, tpcan_buffer);
+        try {
+          pcan.Write(me.port, tpcan_buffer);
+        } catch(err) {
+          reject(err);
+        }
         me.emit('write', msg);
         // If loopback is enabled, push message back into receive stream
         if (me.options.loopback) {
@@ -158,11 +193,11 @@ module.exports = class PcanUsb extends Duplex {
         }
         resolve();
       } else {
+        me.emit('error', err);
         throw new Error("Tried to send invalid CAN data");
       }
     })
       .catch(function(err) {
-        me.emit('error', err);
         throw new Error(err);
       });
   }
@@ -171,7 +206,7 @@ module.exports = class PcanUsb extends Duplex {
     let me = this;
 
     return new Promise(function(resolve) {
-      let status = pcan.Status(me.port);
+      let status = pcan.GetStatus(me.port);
       resolve(status);
     })
       .catch(function(err) {
@@ -198,9 +233,11 @@ module.exports = class PcanUsb extends Duplex {
       me.push(tpcan.toMsg(read_obj.message)); // Emits 'data' event
     } catch(err) {
       if (err.code != "PCAN_ERROR_QRCVEMPTY") {
-        console.error(err.code);
+        console.debug(err.code);
       }
     }
+    // If status changed, the following will emit a 'status' event
+    this.status.statusCode = pcan.GetStatus(me.port);
   }
 
   // Required for a readable stream; we don't need to do anything
