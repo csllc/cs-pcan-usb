@@ -193,7 +193,6 @@ module.exports = class PcanUsb extends Duplex {
         }
         resolve();
       } else {
-        me.emit('error', err);
         throw new Error("Tried to send invalid CAN data");
       }
     })
