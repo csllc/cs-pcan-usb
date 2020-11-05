@@ -1537,7 +1537,7 @@ napi_value pcan_CAN_ChannelInfo(napi_env env, napi_callback_info info)
     // Check that there are > 0 channels available
     if (pcanAttachedChannelsCount == 0)
     {
-        napi_throw_error(env, 0, "No PCAN channels available");
+        napi_throw_error(env, "PCAN_ERROR_NOCHANNELS", "No PCAN channels available");
         return 0;
     }
 
