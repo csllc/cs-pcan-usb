@@ -83,13 +83,27 @@ module.exports = class PcanUsb extends Duplex {
           }
         }
       } else if (process.platform == "darwin") {
-        // If running on macOS, we fake it by resolving with an object we create
-        resolve([{ channel_handle: 0x51,
-                   device_type: 5,
-                   controller_number: 0,
-                   device_features: 0,
-                   device_id: 0,
-                   channel_condition: 0 }]);
+        const usb  = require('usb');
+        // If running on macOS, we fake it by resolving with an array of objects
+        // we create, based on the number of detected PCAN-USB devices. We assume
+        // that the first handle is always 0x51.
+        let devices = usb.getDeviceList().filter((dev) => {
+          return ((dev.deviceDescriptor.idVendor == 0x0C72) &&
+                  (dev.deviceDescriptor.idProduct == 0x000C));
+        });
+
+        let channels = [];
+
+        for (let index in devices) {
+          channels.push({ channel_handle: (0x51 + Number(index)),
+                          device_type: 5,
+                          controller_number: 0,
+                          device_features: 0,
+                          device_id: 0,
+                          channel_condition: 0 })
+        }
+        
+        resolve(channels);
       } else {
         // If running on Linux or any other platform, we return an empty channel
         // list in an attempt to fail gracefully

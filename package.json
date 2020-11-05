@@ -15,7 +15,8 @@
     "can-usb-com": "^4.0.0",
     "eslint": "^7.10.0",
     "node-pre-gyp": "^0.15.0",
-    "stream": "0.0.2"
+    "stream": "0.0.2",
+    "usb": "^1.6.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",
