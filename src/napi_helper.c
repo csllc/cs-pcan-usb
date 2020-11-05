@@ -172,21 +172,6 @@ void napiDumpValue(napi_env env, napi_value value, char* name)
         snprintf(napiValueBuffer, sizeof(napiValueBuffer),
                  "%p", napiValueExternalPtr);
         break;
-    case napi_bigint:
-        // Assume int64
-        status = napi_get_value_bigint_int64(env, value, &napiValueInt64,
-                                             &napiValueBool);
-        if (status != napi_ok)
-        {
-            printf("napiDumpValue: Error at napi_get_value_bigint_int64: %s",
-                   napiStatusLookup(status));
-        }
-        snprintf(napiValueBuffer, sizeof(napiValueBuffer),
-                 "0x%llX = %lli (lossless=%s)",
-                 (uint64_t)napiValueInt64,
-                 napiValueInt64,
-                 napiValueBool ? "true" : "false");
-        break;
     }
 
     // Print result
