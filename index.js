@@ -68,13 +68,19 @@ module.exports = class PcanUsb extends Duplex {
   list() {
     var me = this;
 
-    return new Promise(function(resolve) {
+    return new Promise(function(resolve, reject) {
       if (process.platform == "win32") {
         // If running on Windows, get channel data through the ChannelInfo method
         try {
           resolve(pcan.ChannelInfo());
-        } catch {
-          resolve([]);
+        } catch(err) {
+          if (err.code == "PCAN_ERROR_NOCHANNELS") {
+            // If no channels are reported by the driver, resolve with an
+            // empty list
+            resolve([]);
+          } else {
+            reject(err);
+          }
         }
       } else if (process.platform == "darwin") {
         // If running on macOS, we fake it by resolving with an object we create
@@ -102,22 +108,28 @@ module.exports = class PcanUsb extends Duplex {
       })
       .catch(function(err) {
         me.emit('error', err);
-        throw new Error(err);
+        throw err;
       });
   }
 
   open(port) { 
     var me = this;
 
-    return new Promise(function(resolve) {
+    return new Promise(function(resolve, reject) {
       // Initialize CAN port (aka "channel")
-      pcan.Initialize(port, pcan.TranslateBaud(me.options.canRate));
+      try {
+        pcan.Initialize(port, pcan.TranslateBaud(me.options.canRate));
 
-      me.port = port;
-      me._configure();
-      me.isReady = true;
-      me.emit('open');
-      resolve();
+        me.port = port;
+        me._configure();
+        me.isReady = true;
+        me.emit('open');
+        
+        resolve();
+      } catch(err) {
+        me.emit('error', err);
+        reject(err);
+      }
     })
       .then(function() {
         // Close event handler
@@ -137,11 +149,10 @@ module.exports = class PcanUsb extends Duplex {
         if (process.platform == "win32") {
           pcan.SetValue(port, 0x07, Buffer.from([0x01]));
         }
-
       })
       .catch(function(err) {
         me.emit('error', err);
-        throw new Error(err);
+        throw err;
       });
   }
 
@@ -151,17 +162,14 @@ module.exports = class PcanUsb extends Duplex {
     return new Promise(function(resolve) {
       // Remove listeners
       me.removeAllListeners();
-
       if (me.isOpen()) {
         pcan.DisableEvent(me.port);
         pcan.Reset(me.port);
         pcan.Uninitialize(me.port);
-
       }
       // Close stream
       me.emit('close');
       resolve();
-
     })
       .then(function() {
         me.port = null;
@@ -170,7 +178,7 @@ module.exports = class PcanUsb extends Duplex {
       })
       .catch(function(err) {
         me.emit('error', err);
-        throw new Error(err);
+        throw err;
       });
   }
 
@@ -180,24 +188,29 @@ module.exports = class PcanUsb extends Duplex {
     return new Promise(function(resolve, reject) {
       if (msg.buf.length <= 8) {
         let tpcan_buffer = tpcan.toTPCANMsg(msg);
+
         // Write message to bus
         try {
           pcan.Write(me.port, tpcan_buffer);
         } catch(err) {
           reject(err);
         }
+
         me.emit('write', msg);
+
         // If loopback is enabled, push message back into receive stream
         if (me.options.loopback) {
           me.push(tpcan.toMsg(tpcan_buffer));
         }
+
         resolve();
       } else {
-        throw new Error("Tried to send invalid CAN data");
+        reject(new Error("Tried to send invalid CAN data"));
       }
     })
       .catch(function(err) {
-        throw new Error(err);
+        me.emit('error', err);
+        throw err;
       });
   }
 
@@ -210,7 +223,7 @@ module.exports = class PcanUsb extends Duplex {
     })
       .catch(function(err) {
         me.emit('error', err);
-        throw new Error(err);
+        throw err;
       });
   }
 
