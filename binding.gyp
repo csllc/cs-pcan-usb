@@ -14,8 +14,15 @@
                 "sources": [ "src/pcan_event_win32.c" ],
                 "msvs_settings": { },
                 "include_dirs": [ "ext/pcan_basic-win32-x64/include" ],
-                "library_dirs": [ "ext/pcan_basic-win32-x64/lib" ],
-                "link_settings": { "libraries": [ "-lPCANBasic" ] }
+                "link_settings": { "libraries": [ "-lPCANBasic" ] },
+                "conditions": [
+                    [ "target_arch=='ia32'", {
+                        "library_dirs": [ "ext/pcan_basic-win32-x64/lib/32" ]
+                    } ],
+                    [ "target_arch=='x64'", {
+                        "library_dirs": [ "ext/pcan_basic-win32-x64/lib/64" ]
+                    } ]
+                ]
             } ],
             [ "OS=='mac'", {
                 "sources": [ "src/pcan_event_darwin.c" ],
@@ -33,8 +40,17 @@
             "files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
             "conditions": [
                 [ "OS=='win'", {
-                    "files": [ "ext/pcan_basic-win32-x64/bin/PCANBasic.dll",
-                               "ext/pcan_basic-win32-x64/bin/ReadMe.txt" ]
+                    "conditions": [
+                        [ "target_arch=='ia32'", {
+                            "files": [ "ext/pcan_basic-win32-x64/bin/32/PCANBasic.dll",
+                                       "ext/pcan_basic-win32-x64/bin/ReadMe.txt" ]
+                        } ],
+                        [ "target_arch=='x64'", {
+                            "files": [ "ext/pcan_basic-win32-x64/bin/64/PCANBasic.dll",
+                                       "ext/pcan_basic-win32-x64/bin/ReadMe.txt" ]
+                        } ]
+                    ]
+
                 } ],
                 [ "OS=='mac'", {
                     "files": [ "ext/pcbusb-darwin-x64/COPYRIGHT",
