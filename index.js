@@ -66,8 +66,6 @@ module.exports = class PcanUsb extends Duplex {
 
   // Returns a promise that resolves to a list of available CAN ports
   list() {
-    var me = this;
-
     return new Promise(function(resolve, reject) {
       if (process.platform == "win32") {
         // If running on Windows, get channel data through the ChannelInfo method
@@ -121,7 +119,6 @@ module.exports = class PcanUsb extends Duplex {
         return channels;
       })
       .catch(function(err) {
-        me.emit('error', err);
         throw err;
       });
   }
@@ -141,7 +138,7 @@ module.exports = class PcanUsb extends Duplex {
         
         resolve();
       } catch(err) {
-        me.emit('error', err);
+        me.emit('error', err); // emit() instead of throw, matching CAN-USB-COM behavior
         reject(err);
       }
     })
@@ -165,7 +162,6 @@ module.exports = class PcanUsb extends Duplex {
         }
       })
       .catch(function(err) {
-        me.emit('error', err);
         throw err;
       });
   }
@@ -173,25 +169,28 @@ module.exports = class PcanUsb extends Duplex {
   close() {
     let me = this;
 
-    return new Promise(function(resolve) {
-      // Remove listeners
-      me.removeAllListeners();
-      if (me.isOpen()) {
-        pcan.DisableEvent(me.port);
-        pcan.Reset(me.port);
-        pcan.Uninitialize(me.port);
+    return new Promise(function(resolve, reject) {
+      if (me.port === undefined) {
+        reject(new Error("CAN port is undefined"));
+      } else {
+        // Remove listeners
+        me.removeAllListeners();
+        if (me.isOpen()) {
+          pcan.DisableEvent(me.port);
+          pcan.Reset(me.port);
+          pcan.Uninitialize(me.port);
+        }
+        // Close stream
+        me.emit('close');
+        resolve();
       }
-      // Close stream
-      me.emit('close');
-      resolve();
     })
       .then(function() {
-        me.port = null;
+        me.port = undefined;
         me.isReady = false;
         me.push(null);
       })
       .catch(function(err) {
-        me.emit('error', err);
         throw err;
       });
   }
@@ -200,45 +199,51 @@ module.exports = class PcanUsb extends Duplex {
     let me = this;
     
     return new Promise(function(resolve, reject) {
-      if (msg.buf.length <= 8) {
-        let tpcan_buffer = tpcan.toTPCANMsg(msg);
-
-        // Write message to bus
-        try {
-          pcan.Write(me.port, tpcan_buffer);
-        } catch(err) {
-          reject(err);
-        }
-
-        me.emit('write', msg);
-
-        // If loopback is enabled, push message back into receive stream
-        if (me.options.loopback) {
-          me.push(tpcan.toMsg(tpcan_buffer));
-        }
-
-        resolve();
+      if (me.port === undefined) {
+        reject(new Error("CAN port is undefined"));
       } else {
-        reject(new Error("Tried to send invalid CAN data"));
+        if (msg.buf.length <= 8) {
+          let tpcan_buffer = tpcan.toTPCANMsg(msg);
+
+          // Write message to bus
+          try {
+            pcan.Write(me.port, tpcan_buffer);
+          } catch(err) {
+            reject(err);
+          }
+
+          me.emit('write', msg);
+
+          // If loopback is enabled, push message back into receive stream
+          if (me.options.loopback) {
+            me.push(tpcan.toMsg(tpcan_buffer));
+          }
+
+          resolve();
+        } else {
+          reject(new Error("Tried to send invalid CAN data"));
+        }
       }
     })
-      .catch(function(err) {
-        me.emit('error', err);
-        throw err;
-      });
+    .catch(function(err) {
+      throw err;
+    });
   }
 
   status() {
     let me = this;
 
-    return new Promise(function(resolve) {
-      let status = pcan.GetStatus(me.port);
-      resolve(status);
+    return new Promise(function(resolve, reject) {
+      if (me.port === undefined) {
+        reject(new Error("CAN port is undefined"));
+      } else {
+        let status = pcan.GetStatus(me.port);
+        resolve(status);
+      }
     })
-      .catch(function(err) {
-        me.emit('error', err);
-        throw err;
-      });
+    .catch(function(err) {
+      throw err;
+    });
   }
 
   // Required function for cs-modbus GenericConnection
@@ -254,16 +259,20 @@ module.exports = class PcanUsb extends Duplex {
   _onData() {
     let me = this;
     
-    try {
-      let read_obj = pcan.Read(me.port);
-      me.push(tpcan.toMsg(read_obj.message)); // Emits 'data' event
-    } catch(err) {
-      if (err.code != "PCAN_ERROR_QRCVEMPTY") {
-        console.debug(err.code);
+    if (me.port === undefined) {
+      throw new Error("CAN port is undefined");
+    } else {
+      try {
+        let read_obj = pcan.Read(me.port);
+        me.push(tpcan.toMsg(read_obj.message)); // Emits 'data' event
+      } catch(err) {
+        if (err.code != "PCAN_ERROR_QRCVEMPTY") {
+          console.debug(err.code);
+        }
       }
+      // If status changed, the following will emit a 'status' event
+      this.status.statusCode = pcan.GetStatus(me.port);
     }
-    // If status changed, the following will emit a 'status' event
-    this.status.statusCode = pcan.GetStatus(me.port);
   }
 
   // Required for a readable stream; we don't need to do anything
