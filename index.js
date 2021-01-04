@@ -133,9 +133,11 @@ module.exports = class PcanUsb extends Duplex {
       // Ensure listen-only mode is turned off
       pcan.SetValue(port, PCAN_LISTEN_ONLY, Buffer.from([0]));
 
-      // Start with message reception off - failure to do this has been
-      // observed to cause inexplicable timing problems in apps
-      pcan.SetValue(port, PCAN_RECEIVE_STATUS, Buffer.from([0]));
+      // Windows only: Start with message reception off - failure to do this
+      // has been observed to cause inexplicable timing problems in apps
+      if (process.platform == "win32") {
+        pcan.SetValue(port, PCAN_RECEIVE_STATUS, Buffer.from([0]));
+      }
 
       // Initialize CAN port (aka "channel")
       try {
@@ -146,8 +148,10 @@ module.exports = class PcanUsb extends Duplex {
         me.isReady = true;
         me.emit('open');
 
-        // Turn on message reception
-        pcan.SetValue(port, PCAN_RECEIVE_STATUS, Buffer.from([1]));
+        // Windows only: Turn on message reception
+        if (process.platform == "win32") {
+          pcan.SetValue(port, PCAN_RECEIVE_STATUS, Buffer.from([1]));
+        }
         
         resolve();
       } catch(err) {
