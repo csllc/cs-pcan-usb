@@ -15,6 +15,9 @@ const DEFAULT_OPTIONS = {
   loopback: false,
 };
 
+const PCAN_RECEIVE_STATUS = 0x0F;
+const PCAN_LISTEN_ONLY = 0x08;
+
 module.exports = class PcanUsb extends Duplex {
 
   constructor(options) {
@@ -127,6 +130,13 @@ module.exports = class PcanUsb extends Duplex {
     var me = this;
 
     return new Promise(function(resolve, reject) {
+      // Ensure listen-only mode is turned off
+      pcan.SetValue(port, PCAN_LISTEN_ONLY, Buffer.from([0]));
+
+      // Start with message reception off - failure to do this has been
+      // observed to cause inexplicable timing problems in apps
+      pcan.SetValue(port, PCAN_RECEIVE_STATUS, Buffer.from([0]));
+
       // Initialize CAN port (aka "channel")
       try {
         pcan.Initialize(port, pcan.TranslateBaud(me.options.canRate));
@@ -135,6 +145,9 @@ module.exports = class PcanUsb extends Duplex {
         me._configure();
         me.isReady = true;
         me.emit('open');
+
+        // Turn on message reception
+        pcan.SetValue(port, PCAN_RECEIVE_STATUS, Buffer.from([1]));
         
         resolve();
       } catch(err) {
