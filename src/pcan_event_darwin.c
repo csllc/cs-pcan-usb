@@ -101,16 +101,9 @@ void *pcanEventThreadProc(void *lpParam)
         return (void*)1;
     }
 
-    // Set up file descriptors for select
+    struct timeval timeout = { 1, 0 }; // 1 second, 0 microseconds
     fd_set readfds;
-    FD_ZERO(&readfds);
-	FD_SET(threadParams.pipeRead, &readfds);
-    FD_SET(threadParams.pipeExit, &readfds);
-
-    // Determine largest file descriptor
     int nfds = 0;
-    nfds = (threadParams.pipeRead > threadParams.pipeExit) ?
-        threadParams.pipeRead : threadParams.pipeExit;
 
     // Wait for either file descriptor to be signaled
     int threadExit = 0;
@@ -120,16 +113,29 @@ void *pcanEventThreadProc(void *lpParam)
 #ifdef PCAN_EVENT_DARWIN_DEBUG
         printf("pcanEventThreadProc: Waiting for pipeRead or pipeExit...\n");
 #endif
-        ret = select(nfds+1, &readfds, NULL, NULL, NULL);
 
-        if (FD_ISSET(threadParams.pipeRead, &readfds))
+        // Set up file descriptors for select
+        FD_ZERO(&readfds);
+        FD_SET(threadParams.pipeRead, &readfds);
+        FD_SET(threadParams.pipeExit, &readfds);
+
+        // Determine greatest file descriptor
+        nfds = (threadParams.pipeRead > threadParams.pipeExit) ?
+            threadParams.pipeRead : threadParams.pipeExit;
+
+        ret = select(nfds+1, &readfds, NULL, NULL, &timeout);
+
+        if (FD_ISSET(threadParams.pipeExit, &readfds))
+        {
+#ifdef PCAN_EVENT_DARWIN_DEBUG
+            printf("pcanEventThreadProc: Received exit signal.\n");
+#endif
+            threadExit = 1;
+        }
+        else if (FD_ISSET(threadParams.pipeRead, &readfds))
         {
             // Invoke callback
             (threadParams.callback)(threadParams.canChannel);
-        }
-        else if (FD_ISSET(threadParams.pipeExit, &readfds))
-        {
-            threadExit = 1;
         }
         else
         {
@@ -215,7 +221,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
         return 1;
     }
 
-    // Wait for pcanEventSpawn to be signaled and all that...
+    // Wait for pcanPipeSpawn to be signaled and all that...
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(pcanPipeSpawn[R], &readfds);
@@ -229,7 +235,7 @@ int pcanEventEnable(TPCANHandle pcanChannel, void *callback)
     ret = select(pcanPipeSpawn[R]+1, &readfds, NULL, NULL, &timeout);
     if (ret == -1)
     {
-        printf("pcanEventEnable: Unable to veriy thread started; "
+        printf("pcanEventEnable: Unable to verify worker thread started; "
                "error at select(): %s\n",
                strerror(errno));
         return 1;
@@ -249,6 +255,10 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     int ret = 0;
 
     // Stop the worker thread
+#ifdef PCAN_EVENT_DARWIN_DEBUG
+    printf("pcanEventDisable: Stopping worker thread\n");
+#endif
+    
     size_t count = 0;
     int buf = 0;
     count = write(pcanPipeExit[W], &buf, sizeof(buf));
@@ -259,6 +269,9 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     }
 
     // Wait for the worker thread to exit
+#ifdef PCAN_EVENT_DARWIN_DEBUG
+    printf("pcanEventDisable: Waiting for worker thread to exit\n");
+#endif
     void *pcanEventThreadExitCode = 0;
 
     ret = pthread_join(pcanEventThread, &pcanEventThreadExitCode);
@@ -268,15 +281,21 @@ int pcanEventDisable(TPCANHandle pcan_Channel)
     }
     else
     {
+#ifdef PCAN_EVENT_DARWIN_DEBUG
         printf("pcanEventDisable: Worker thread exited with code %i\n",
                (int)pcanEventThreadExitCode);
+#endif
     }
 
     // Close pipes
     close(pcanPipeSpawn[W]);
     close(pcanPipeSpawn[R]);
-    close(pcanPipeExit[R]);
     close(pcanPipeExit[W]);
+    close(pcanPipeExit[R]);
+
+#ifdef PCAN_EVENT_DARWIN_DEBUG
+    printf("pcanEventDisable: Closed pipes; done.\n");
+#endif
 
     return 0;
 }
