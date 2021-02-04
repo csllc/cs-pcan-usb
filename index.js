@@ -279,12 +279,15 @@ module.exports = class PcanUsb extends Duplex {
     if (me.port === undefined) {
       throw new Error("CAN port is undefined");
     } else {
-      try {
-        let read_obj = pcan.Read(me.port);
-        me.push(tpcan.toMsg(read_obj.message)); // Emits 'data' event
-      } catch(err) {
-        if (err.code != "PCAN_ERROR_QRCVEMPTY") {
-          console.debug(err.code);
+      while (true) {
+        try {
+          let read_obj = pcan.Read(me.port);
+          me.push(tpcan.toMsg(read_obj.message)); // Emits 'data' event
+        } catch(err) {
+          if (err.code != "PCAN_ERROR_QRCVEMPTY") {
+            console.debug(err.code);
+          }
+          break;
         }
       }
       // If status changed, the following will emit a 'status' event
