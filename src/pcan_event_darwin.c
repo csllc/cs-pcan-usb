@@ -137,6 +137,10 @@ void *pcanEventThreadProc(void *lpParam)
             // Invoke callback
             (threadParams.callback)(threadParams.canChannel);
         }
+        else if (ret == 0)
+        {
+            // Neither pipe had any data read for reading; do nothing
+        }
         else
         {
             printf("pcanEventThreadProc: Unexpected value returned by "
