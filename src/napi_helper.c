@@ -172,6 +172,8 @@ void napiDumpValue(napi_env env, napi_value value, char* name)
         snprintf(napiValueBuffer, sizeof(napiValueBuffer),
                  "%p", napiValueExternalPtr);
         break;
+    default:
+        break;
     }
 
     // Print result

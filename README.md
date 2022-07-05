@@ -8,7 +8,7 @@ This module uses native code through N-API and currently supports Windows and ma
 
 ## Getting Started
 
-The following assumes that [NodeJS](https://nodejs.org) is already installed. This module was developed using Node v12.18.4 for Windows 10 x86_64 and macOS 10.15.6.
+The following assumes that [NodeJS](https://nodejs.org) is already installed. This module was developed using Node v14.18.3 for Windows 10 x86_64 and macOS 12.3.1. This module is known to work with Node v12.18.x and macOS 10.15.x.
 
 To install this module, run:
 ```
