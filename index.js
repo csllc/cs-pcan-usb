@@ -37,7 +37,6 @@ module.exports = class PcanUsb extends Duplex {
       notify() {
         let status = { code: this.code, string: this.string, isError: this.isError };
         me.emit('status', status );
-        console.debug(status);
       },
       get statusCode() { return this.code; },
       set statusCode(code) {
