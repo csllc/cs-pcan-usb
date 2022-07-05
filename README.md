@@ -308,4 +308,3 @@ The following have been observed as potential sources of unexpected behavior in 
 The following have not been tested due to hardware availability.
 	
  - All FD functions (`CAN_InitializeFD`, `CAN_ReadFD`, `CAN_WriteFD`)
- - Enumerating more than one PCAN device connected to a computer
