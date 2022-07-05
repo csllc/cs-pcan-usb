@@ -1,6 +1,6 @@
 'use strict';
 
-const binary = require('node-pre-gyp');
+const binary = require('@mapbox/node-pre-gyp');
 const path = require('path');
 const pcan_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
 const pcan = require(pcan_path);
