@@ -13,7 +13,7 @@
     "@mapbox/node-pre-gyp": "^1.0.9",
     "bindings": "~1.2.1",
     "stream": "0.0.2",
-    "usb": "^1.9.2"
+    "usb": "^2.5.2"
   },
   "devDependencies": {
     "@csllc/j1939": "^1.1.1",
