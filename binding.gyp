@@ -1,6 +1,6 @@
 {
     "variables": {
-        "mac_dylib_orig": "libPCBUSB.0.9.dylib",
+        "mac_dylib_orig": "libPCBUSB.0.11.1.dylib",
         "mac_dylib": "libPCBUSB.dylib"
     },
     "targets": [ {
@@ -28,7 +28,12 @@
                 "sources": [ "src/pcan_event_darwin.c" ],
                 "include_dirs": [ "ext/pcbusb-darwin-x64/include" ],
                 "library_dirs": [ "<(module_root_dir)/ext/pcbusb-darwin-x64/lib" ],
-                "link_settings": { "libraries": [ "-lPCBUSB" ] }
+                "link_settings": {
+                    "libraries": [
+
+                        "-lPCBUSB"
+                    ],
+                }
             } ]
         ]
     },
@@ -68,7 +73,7 @@
                     "action_name": "install_name_tool",
                     "inputs": [ "<(PRODUCT_DIR)/<(module_name).node" ],
                     "outputs": [ "" ],
-                    "action": [ "install_name_tool", "-change", "<(mac_dylib_orig)", "@loader_path/<(mac_dylib)", "<(PRODUCT_DIR)/<(module_name).node" ]
+                    "action": [ "install_name_tool", "-change", "@rpath/<(mac_dylib_orig)", "@loader_path/<(mac_dylib)", "<(PRODUCT_DIR)/<(module_name).node" ]
                 } ]
             } ]
         ]
