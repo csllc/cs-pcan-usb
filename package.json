@@ -1,6 +1,6 @@
 {
   "name": "@csllc/cs-pcan-usb",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "PCAN-USB module for NodeJS",
   "main": "index.js",
   "license": "MIT",
