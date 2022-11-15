@@ -2,7 +2,7 @@
 
 This module provides a NodeJS interface to the [PEAK-System](https://www.peak-system.com/) [PCAN-USB](https://www.peak-system.com/PCAN-USB.199.0.html?&L=1) adapter, and possibly others that are supported by the [PCAN-Basic library](https://www.peak-system.com/PCAN-Basic.239.0.html?&L=1).
 
-This module is meant to serve as a drop-in replacement for `can-usb-com`, allowing the PCAN-USB adapter to be used in place of [GridConnect CAN-USB-COM](https://www.gridconnect.com/products/usb-can-interface-can-usb-com).
+This module is meant to be compatible with a wrapper like @clssc/cs-canbus-universal, providing application support for PCAN-USB adapters.
 
 This module uses native code through N-API and currently supports Windows and macOS.
 
