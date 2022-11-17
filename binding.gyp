@@ -1,7 +1,8 @@
 {
     "variables": {
         "mac_dylib_orig": "libPCBUSB.0.11.1.dylib",
-        "mac_dylib": "libPCBUSB.dylib"
+        "mac_dylib": "libPCBUSB.dylib",
+        "openssl_fips" : "0"
     },
     "targets": [ {
         "target_name": "<(module_name)",
