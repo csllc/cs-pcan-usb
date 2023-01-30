@@ -6,7 +6,6 @@
   "license": "MIT",
   "author": "cwalden@controls.com",
   "os": [
-    "darwin",
     "win32"
   ],
   "dependencies": {
