@@ -2,7 +2,7 @@
 
 This module provides a NodeJS interface to the [PEAK-System](https://www.peak-system.com/) [PCAN-USB](https://www.peak-system.com/PCAN-USB.199.0.html?&L=1) adapter, and possibly others that are supported by the [PCAN-Basic library](https://www.peak-system.com/PCAN-Basic.239.0.html?&L=1).
 
-This module is meant to be compatible with a wrapper like @clssc/cs-canbus-universal, providing application support for PCAN-USB adapters.
+This module is meant to be compatible with a wrapper like @csllc/cs-canbus-universal, providing application support for PCAN-USB adapters.
 
 This module uses native code through Node-API and supports Windows x86_64 and macOS (Intel and Apple Silicon). Node 24 or later is recommended.
 
@@ -147,7 +147,7 @@ acceptance_mask = ~(fromID ^ toID)
 
 #### Mixing Filter Types
 
-Internally, the PCAN-USB adapter does not differentiate between standard and extended ID filtering. The `ext` property is only made available for compatibility with `can-usb-com` and `cs-canlib`. 
+Internally, the PCAN-USB adapter does not differentiate between standard and extended ID filtering. The `ext` property is only made available for compatibility with `@csllc/can-usb-com` and `@csllc/cs-canlib`. 
 
 As such, a filer specification like
 
@@ -155,7 +155,7 @@ As such, a filer specification like
 { ext: true, id: '00000000 FFFFFFFFF' }
 ```
 
-will allow all messages with standard IDs (`000` through `7FF`) through to the receive buffer. This **is not** consistent with `can-usb-com` or `cs-canlib`, which follow [CAN-USB-COM's specification](https://gridconnect.box.com/shared/static/c7l5u2vgsid1a24y6r0a0wv5hwaunr71.pdf):
+will allow all messages with standard IDs (`000` through `7FF`) through to the receive buffer. This **is not** consistent with `@csllc/can-usb-com` or `cs-canlib`, which follow [CAN-USB-COM's specification](https://gridconnect.box.com/shared/static/c7l5u2vgsid1a24y6r0a0wv5hwaunr71.pdf):
  - When [filtering is] disabled, all CAN messages are received regardless of the definitions in the list
  - When [filtering is] enabled, only messages which match filter definitions in the list will be passed through.
 
@@ -226,7 +226,7 @@ Before updating or modifying this package, please
 
 In order to run unit tests (`npm test`), at least one PCAN-USB device must be connected to the computer.
 
-The `pingpong` example (`example/js/pingpong.js`) uses `cs-pcan-usb` for one adapter, and `can-usb-com` for the other. These must be connected via a properly terminated bus. It also needs `can-usb-com` and `@csllc/j1939`, which are not dev dependencies of this package; install them with `npm install --no-save can-usb-com @csllc/j1939`.
+The `pingpong` example (`example/js/pingpong.js`) uses `@csllc/cs-pcan-usb` for one adapter, and `@csllc/can-usb-com` for the other. These must be connected via a properly terminated bus. It also needs `@csllc/can-usb-com` and `@csllc/j1939`, which are not dev dependencies of this package; install them with `npm install --no-save @csllc/can-usb-com @csllc/j1939`.
 
 Do not run any tests on a bus with active traffic, since receiving unexpected CAN packets may confuse the tests.
 
