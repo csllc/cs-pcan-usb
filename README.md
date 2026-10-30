@@ -221,12 +221,12 @@ Refer to the PCAN-Basic documentation for details on the full API that this modu
 
 Before updating or modifying this package, please
 
- - Lint any changes using `eslint`.
+ - Lint any changes using `npm run lint`.
  - Confirm that unit tests pass, noting the exceptions described in the next section.
 
 In order to run unit tests (`npm test`), at least one PCAN-USB device must be connected to the computer.
 
-The `pingpong` test is currently configured to use `cs-pcan-usb` for one adapter, and `can-usb-com` for the other. These must be connected via a properly terminated bus.
+The `pingpong` example (`example/js/pingpong.js`) uses `cs-pcan-usb` for one adapter, and `can-usb-com` for the other. These must be connected via a properly terminated bus. It also needs `can-usb-com` and `@csllc/j1939`, which are not dev dependencies of this package; install them with `npm install --no-save can-usb-com @csllc/j1939`.
 
 Do not run any tests on a bus with active traffic, since receiving unexpected CAN packets may confuse the tests.
 

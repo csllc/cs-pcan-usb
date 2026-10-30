@@ -1,15 +1,15 @@
 /**
- * Implements a pingpong test using 2 CAN-USB-COM modules
+ * Implements a pingpong test using a PCAN-USB adapter and a CAN-USB-COM module
  *
  * Note you must
- *   npm install can-usb-com
- * in order for this to work.to
+ *   npm install --no-save can-usb-com @csllc/j1939
+ * in order for this to work.
  *
  * The two devices must be connected together and properly terminated (so that
- * CANBUS communication is physically possible).physically
+ * CANBUS communication is physically possible).
  *
  * This script opens both devices, and each device sends a message to the other.
- * When a device receives a message from the other, it immediately sends it back.it
+ * When a device receives a message from the other, it immediately sends it back.
  *
  * We use the 'priority' field of the message ID to keep track of who originated
  * the message.
