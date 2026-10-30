@@ -129,7 +129,8 @@ module.exports = class PcanUsb extends Duplex {
             let buf = Buffer.alloc(4);
             try {
               pcan.GetValue(handle, PCAN_CHANNEL_CONDITION, buf);
-            } catch (err) {
+            } catch {
+              // No hardware on this handle
               continue;
             }
             let condition = buf.readUInt32LE(0);
