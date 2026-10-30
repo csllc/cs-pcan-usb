@@ -294,6 +294,16 @@ To make the prebuilt binary locally (after `npm run fetch-deps`):
 
  - `npm run prebuildify`
 
+### Releasing
+
+Releases are built and published by the GitHub Actions workflow in `.github/workflows/release.yml`, which runs when a version tag is pushed:
+
+ 1. Run the tests locally with a PCAN-USB adapter connected, on Windows and on macOS: `npm test` (the CI runners have no CAN hardware, so they only check that the binaries build and load)
+ 1. `npm version patch` (or `minor` / `major`), which updates `package.json` and creates the tag `vX.Y.Z`
+ 1. `git push --follow-tags`
+
+The workflow builds the Windows x86_64 binary and the macOS Apple Silicon and Intel binaries, each on its own runner, using the vendor libraries downloaded by `tools/fetch-deps.js`. It checks that each binary loads, that the macOS binaries load the bundled PCBUSB copy, and that the bundled copy is identical to the PCBUSB release. It then publishes the package to npm with the binaries included, after checking that no PEAK PCAN-Basic files would be published. Publishing uses npm trusted publishing, so no npm token is stored in GitHub; the package's trusted publisher on npmjs.com must name this repository and the workflow file `release.yml`.
+
 ## Functionality Limitations
 
 ### Questionable Functionality

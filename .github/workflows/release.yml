@@ -1,73 +1,253 @@
-# One-off check that the PEAK PCAN-Basic API (Windows) and the UV Software
-# PCBUSB library (macOS) can be downloaded and used on GitHub's runners, so
-# the release workflow can build without any vendor files in this repo.
-# Delete this file once the release workflow is in place.
+# Build the prebuilt binaries for win32-x64, darwin-arm64 and darwin-x64, then
+# publish the package to npm with the binaries included.
+#
+# Triggered by pushing a version tag, e.g.:
+#   npm version patch      # bumps package.json and creates tag vX.Y.Z
+#   git push --follow-tags
+#
+# Publishing uses npm trusted publishing (OIDC), so no npm token is stored in
+# GitHub. The trusted publisher on npmjs.com must name this repository and the
+# workflow file "release.yml".
+#
+# The functional tests need a PCAN-USB adapter on a live CAN bus, so they are
+# not run here; run `npm test` locally (on Windows and macOS) before tagging a
+# release.
+#
+# Vendor libraries are downloaded by tools/fetch-deps.js, which pins each
+# download by SHA-256:
+#  - Windows: PEAK's PCAN-Basic API. Its license does not allow redistributing
+#    it, so none of its files (including PCANBasic.dll) go into the package.
+#  - macOS: UV Software's PCBUSB library. Its license allows redistributing
+#    complete, unmodified copies, so the whole release folder is bundled next
+#    to each macOS binary (tools/bundle-pcbusb.js).
 
-name: PCAN SDK test
+name: Release
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
 
 jobs:
-  windows:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: pwsh
+  build-windows:
+    name: Build win32-x64
+    # Pinned rather than windows-latest so a runner image change can't
+    # silently change the compiler. node-gyp 12.1+ supports both Visual
+    # Studio 2022 and 2026.
+    runs-on: windows-2025
+
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # PEAK only publishes the latest PCAN-Basic at a fixed URL. Caching the
+      # pinned copy lets releases keep building for a while after PEAK
+      # replaces it; once the cache expires, fetch-deps fails with a hash
+      # mismatch until the pin in tools/fetch-deps.js is updated.
+      - name: Cache vendor library
+        uses: actions/cache@v5
+        with:
+          path: deps
+          key: deps-win32-${{ hashFiles('tools/fetch-deps.js') }}
+
       - name: Download PCAN-Basic API
-        run: |
-          $url = 'https://www.peak-system.com/fileadmin/media/files/PCAN-Basic.zip'
-          $r = Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\PCAN-Basic.zip" -PassThru
-          "HTTP status:   $($r.StatusCode)"
-          "Last-Modified: $($r.Headers['Last-Modified'])"
-          "ETag:          $($r.Headers['ETag'])"
-          $f = Get-Item "$env:RUNNER_TEMP\PCAN-Basic.zip"
-          "Size:          $($f.Length)"
-          "SHA256:        $((Get-FileHash $f -Algorithm SHA256).Hash)"
+        run: node tools/fetch-deps.js
 
-      - name: Unpack and list contents
-        run: |
-          Expand-Archive "$env:RUNNER_TEMP\PCAN-Basic.zip" -DestinationPath "$env:RUNNER_TEMP\pcan-basic"
-          Get-ChildItem -Recurse "$env:RUNNER_TEMP\pcan-basic" |
-            Where-Object { -not $_.PSIsContainer } |
-            Select-Object @{n='Path';e={$_.FullName.Substring("$env:RUNNER_TEMP\pcan-basic".Length)}}, Length |
-            Format-Table -AutoSize | Out-String -Width 300
+      # --ignore-scripts skips the package's own install script, which would
+      # otherwise compile the module (prebuildify compiles it below)
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
 
-      - name: Show version and rights-of-use text
-        run: |
-          $readme = Get-ChildItem -Recurse "$env:RUNNER_TEMP\pcan-basic" -Filter 'ReadMe.txt' | Select-Object -First 1
-          Get-Content $readme.FullName -TotalCount 12
-          ''
-          (Get-Content $readme.FullName -Raw) -split "`r?`n`r?`n" |
-            Where-Object { $_ -match 'Rights to use|redistribut|distribut' }
+      - name: Build prebuilt binary
+        run: npm run prebuildify
 
-      - name: Check for files the build needs
+      # Load the prebuilt binary (not build/Release). The PEAK driver is not
+      # installed on the runner, so first check that the module still loads
+      # without PCANBasic.dll and reports no channels. Then put the
+      # PCAN-Basic package's copy of the DLL on PATH (for this check only) and
+      # check that the binary links and that the expected functions are
+      # exported.
+      - name: Check that the binary loads
+        shell: bash
         run: |
-          $root = "$env:RUNNER_TEMP\pcan-basic"
-          foreach ($pattern in 'PCANBasic.h', 'PCANBasic.lib', 'PCANBasic.dll') {
-            "--- $pattern"
-            Get-ChildItem -Recurse $root -Filter $pattern | ForEach-Object { "$($_.FullName.Substring($root.Length))  ($($_.Length) bytes)" }
-          }
+          rm -rf build
+          ls -l prebuilds/*/
+          if find prebuilds -iname '*.dll' | grep .; then echo "Unexpected DLL in prebuilds"; exit 1; fi
+          node -e "
+            const Pcan = require('.');
+            new Pcan().list().then((channels) => {
+              if (channels.length !== 0) throw new Error('expected no channels');
+              console.log('OK: loads without PCANBasic.dll; list() =', channels);
+            });
+          "
+          export PATH="$(pwd)/deps/pcan-basic/x64:$PATH"
+          node -e "
+            const native = require('node-gyp-build')(process.cwd());
+            for (const fn of ['Initialize', 'Uninitialize', 'Read', 'Write', 'GetValue', 'SetValue',
+                              'ChannelInfo', 'EnableEvent', 'DisableEvent', 'TranslateBaud']) {
+              if (typeof native[fn] !== 'function') throw new Error(fn + ' not exported');
+            }
+            console.log('OK:', Object.keys(native).length, 'native functions');
+            const Pcan = require('.');
+            new Pcan().list().then(
+              (channels) => console.log('list() with PCANBasic.dll but no driver:', channels),
+              (err) => console.log('list() with PCANBasic.dll but no driver rejected:', err.code, '-', err.message));
+          "
 
-  macos:
-    runs-on: macos-latest
+      # Tar the folder so the artifact keeps file modes and timestamps
+      - name: Pack binary
+        shell: bash
+        run: tar -cf prebuilds-win32-x64.tar prebuilds
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-win32-x64
+          path: prebuilds-win32-x64.tar
+          if-no-files-found: error
+
+  build-macos:
+    name: Build darwin-${{ matrix.arch }}
+    # Each architecture is built natively on its own runner, so that each
+    # binary can also be load-tested on that architecture
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: x64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+
     steps:
-      - name: Download PCBUSB 0.11.1 and verify checksum
-        run: |
-          curl -fsSL -o "$RUNNER_TEMP/pcbusb.tar.gz" \
-            https://github.com/mac-can/PCBUSB-Library/releases/download/v0.11.1/macOS_Library_for_PCANUSB_v0.11.1.tar.gz
-          echo "3160d1f5200151e3c6541c8c7994f6a8859b59d2b971912ca8c85c131af90a22  $RUNNER_TEMP/pcbusb.tar.gz" | shasum -a 256 -c
+      - name: Check out repository
+        uses: actions/checkout@v6
 
-      - name: Install with the vendor's install script
-        run: |
-          mkdir -p "$RUNNER_TEMP/pcbusb"
-          tar -xzf "$RUNNER_TEMP/pcbusb.tar.gz" -C "$RUNNER_TEMP/pcbusb"
-          sudo sh "$RUNNER_TEMP/pcbusb/PCBUSB/install.sh"
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
 
-      - name: Check installed files
+      - name: Check runner architecture
         run: |
-          uname -m
-          ls -la /usr/local/lib/libPCBUSB* /usr/local/include/PCBUSB.h
-          lipo -info /usr/local/lib/libPCBUSB.dylib
-          otool -D /usr/local/lib/libPCBUSB.dylib
+          node -p "process.arch"
+          test "$(node -p process.arch)" = "${{ matrix.arch }}"
+
+      - name: Download PCBUSB library
+        run: node tools/fetch-deps.js
+
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
+
+      # Builds prebuilds/darwin-<arch>/, then copies the complete PCBUSB
+      # release folder into it
+      - name: Build prebuilt binary
+        run: npm run prebuildify
+
+      # Check that the binary is for the right architecture, that it looks
+      # for libPCBUSB in the bundled folder first, and that the bundled folder
+      # is an exact copy of the PCBUSB release. Then load it: PCBUSB is not
+      # installed in /usr/local on the runner, so this only works if the
+      # bundled copy is found. There's no adapter, so list() should be empty.
+      - name: Check the binary and the bundled PCBUSB
+        run: |
+          rm -rf build
+          dir="prebuilds/darwin-${{ matrix.arch }}"
+          ls -lR "$dir"
+          node_file=$(ls "$dir"/*.node)
+          lipo -info "$node_file"
+          otool -L "$node_file"
+          otool -l "$node_file" | grep -A2 LC_RPATH
+          otool -l "$node_file" | grep -q '@loader_path/PCBUSB' || { echo "rpath @loader_path/PCBUSB missing"; exit 1; }
+          diff -r deps/pcbusb/PCBUSB "$dir/PCBUSB" && echo "OK: bundled PCBUSB is identical to the release"
+          test ! -e /usr/local/lib/libPCBUSB.dylib || { echo "PCBUSB is installed on the runner; the load check would not test the bundled copy"; exit 1; }
+          node -e "
+            require('node-gyp-build')(process.cwd());
+            const Pcan = require('.');
+            new Pcan().list().then((channels) => {
+              if (channels.length !== 0) throw new Error('expected no channels');
+              console.log('OK: loads the bundled libPCBUSB; list() =', channels);
+            });
+          "
+
+      - name: Pack binary
+        run: tar -cf prebuilds-darwin-${{ matrix.arch }}.tar prebuilds
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-darwin-${{ matrix.arch }}
+          path: prebuilds-darwin-${{ matrix.arch }}.tar
+          if-no-files-found: error
+
+  publish:
+    name: Publish to npm
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      id-token: write   # required for npm trusted publishing
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Check that the tag matches package.json
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION"
+            exit 1
+          fi
+
+      - name: Download binaries
+        uses: actions/download-artifact@v8
+        with:
+          pattern: prebuilds-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Unpack binaries
+        run: |
+          for f in artifacts/*.tar; do tar -xf "$f"; done
+          ls -lR prebuilds
+
+      # Each platform needs its binary, each macOS binary needs the complete
+      # PCBUSB folder next to it, and nothing from PEAK may be published
+      - name: Check package contents
+        run: |
+          for p in win32-x64 darwin-arm64 darwin-x64; do
+            ls prebuilds/$p/*.node > /dev/null || { echo "Missing binary for $p"; exit 1; }
+          done
+          for p in darwin-arm64 darwin-x64; do
+            for f in LICENSE COPYRIGHT README PCBUSB.h install.sh libPCBUSB.0.11.1.dylib; do
+              test -f prebuilds/$p/PCBUSB/$f || { echo "Missing PCBUSB/$f in $p"; exit 1; }
+            done
+          done
+          npm pack --dry-run
+          if npm pack --dry-run --json | grep -i -E '"path": *"[^"]*pcanbasic'; then
+            echo "PEAK PCAN-Basic files must not be published"
+            exit 1
+          fi
+
+      - name: Publish
+        run: npm publish
