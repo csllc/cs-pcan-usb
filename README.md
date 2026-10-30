@@ -4,21 +4,27 @@ This module provides a NodeJS interface to the [PEAK-System](https://www.peak-sy
 
 This module is meant to be compatible with a wrapper like @clssc/cs-canbus-universal, providing application support for PCAN-USB adapters.
 
-This module uses native code through N-API and currently supports Windows and macOS.
+This module uses native code through Node-API and supports Windows x86_64 and macOS (Intel and Apple Silicon). Node 24 or later is recommended.
 
 ## Getting Started
 
-The following assumes that [NodeJS](https://nodejs.org) is already installed. This module was developed using Node v14.18.3 for Windows 10 x86_64 and macOS 12.3.1. This module is known to work with Node v12.18.x and macOS 10.15.x.
+The following assumes that [NodeJS](https://nodejs.org) is already installed.
+
+On **Windows**, install the [PEAK-System device driver package](https://www.peak-system.com/support/downloads/drivers/driver-packages/), including the PCAN-Basic API. It provides `PCANBasic.dll`, which is not distributed with this module.
+
+On **macOS**, nothing else is needed: the [PCBUSB library](https://github.com/mac-can/PCBUSB-Library) is bundled with the prebuilt binary.
 
 To install this module, run:
 ```
 npm install @csllc/cs-pcan-usb
 ```
 
+If the PCAN library can't be loaded (for example, the PEAK driver is not installed), the module still loads: `list()` returns an empty list, and other calls fail with an error whose `code` is `ERR_PCAN_NOT_INSTALLED`. This lets applications that support several kinds of CAN adapter keep working on machines without PCAN hardware.
+
 The following is a sample script that opens the CAN port, writes a single message to the bus, and listens for and prints received messages from the bus.
 
 ```js
-const Can = require('cs-pcan-usb');
+const Can = require('@csllc/cs-pcan-usb');
 
 let can = new Can({
   canRate: 250000,
@@ -226,70 +232,67 @@ Do not run any tests on a bus with active traffic, since receiving unexpected CA
 
 ### Build Environment Setup
 
-#### Windows 10 x86 64-bit
-    
- 1. Install NodeJS. Version 12.18.4 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through the Command Prompt. If not, add the appropriate paths to the user's `PATH` environment variable.
- 1. Install the `windows-build-tools` Node package by running the following in an **administrative** Command Prompt or PowerShell window:
-    - `npm install -g windows-build-tools`
- 1. Exit the administrative console after this completes and use a console with normal privileges for the rest of the setup
+The vendor libraries needed to build the module are not part of this repository. `npm run fetch-deps` downloads them from their publishers into `deps/` (which git ignores), checking each against a pinned SHA-256 hash:
+
+ - Windows: the [PEAK PCAN-Basic API](https://www.peak-system.com/PCAN-Basic.239.0.html) (header and import library). PEAK only publishes the latest version at a fixed URL, so when PEAK releases a new version the hash check fails. Check the new version, then update the version and hash in `tools/fetch-deps.js`. Alternatively, unpack `PCAN-Basic.zip` yourself and set the `PCAN_BASIC_SDK` environment variable to that folder.
+ - macOS: the [PCBUSB library](https://github.com/mac-can/PCBUSB-Library) release, pinned to version 0.11.1. Alternatively, set the `PCBUSB_DIR` environment variable to an unpacked PCBUSB release folder, or install PCBUSB with its own `install.sh`, which puts it in `/usr/local`.
+
+#### Windows x86_64
+
+ 1. Install NodeJS 24 or later. Ensure that `node` and `npm` are found when invoked through the Command Prompt.
+ 1. Install the native build tools, either by checking "Automatically install the necessary tools" in the NodeJS installer, or manually:
+    - Visual Studio (or Visual Studio Build Tools) with the "Desktop development with C++" workload
+    - Python 3
+ 1. Install the [PEAK-System device driver package](https://www.peak-system.com/support/downloads/drivers/driver-packages/), including the PCAN-Basic API, to run the module and its tests.
  1. Clone the `cs-pcan-usb` repository:
     `git clone https://github.com/csllc/cs-pcan-usb`
- 1. Install dependencies:
+ 1. Download the PCAN-Basic API, then install dependencies (which also builds the module):
     - `cd cs-pcan-usb\`
+    - `npm run fetch-deps`
     - `npm install`
  1. Build:
-    - `node-gyp clean`
-    - `node-pre-gyp configure`
-    - `node-pre-gyp build`
+    - `npm run rebuild`
  1. Test:
     - `npm test`
- 1. Clean build directory: (optional; perform as necessary)
-    - `node-gyp clean`
-    
-#### macOS x86 64-bit
 
- 1. Install NodeJS. Version 12.18.4 is known to work as of the time of writing. Ensure that `node` and `npm` are found when invoked through a Terminal session. If not, add the appropriate paths to the user's `PATH` environment variable.
- 1. Install Xcode and the Command Line Tools using the App Store. Version 12.0.1 is known to work as of the time of writing.
+#### macOS (Intel or Apple Silicon)
+
+ 1. Install NodeJS 24 or later.
+ 1. Install the Xcode Command Line Tools: `xcode-select --install`
  1. Clone the `cs-pcan-usb` repository:
     `git clone https://github.com/csllc/cs-pcan-usb`
- 1. Install dependencies:
-    - `cd cs-pcan-usb\`
+ 1. Download the PCBUSB library, then install dependencies (which also builds the module):
+    - `cd cs-pcan-usb`
+    - `npm run fetch-deps`
     - `npm install`
  1. Build:
-    - `node-gyp clean`
-    - `node-pre-gyp configure`
-    - `node-pre-gyp build`
+    - `npm run rebuild`
  1. Test:
     - `npm test`
- 1. Clean build directory: (optional; perform as necessary)
-    - `node-gyp clean`
-
 
 #### Build Notes
 
-Depending on shell or executable path configuration, it may be necessary to use `npx` to execute `node-pre-gyp`.
+The module is loaded with [`node-gyp-build`](https://github.com/prebuild/node-gyp-build), which uses a prebuilt binary from `prebuilds/<platform>-<arch>/` if one is present and otherwise falls back to `build/Release/`. When working on the C code, delete the `prebuilds/` folder (if you made one) so that your local build is the one that gets loaded.
 
-If the test stage fails, useful error messages may be hidden by `mocha`. When tracking down a the cause of an error, running the example code directly, for example `node example/js/test.js`, may be helpful.
+On macOS, `npm run build` and `npm run rebuild` copy the complete PCBUSB release folder into `build/Release/PCBUSB/`. The addon looks for `libPCBUSB` there first, then in `/usr/local/lib`.
 
-It may also be helpful to recompile the module with `CANLIB_DEBUG` and `CANLIB_EVENT_DEBUG` defined to enable debugging messages.
+If the test stage fails, useful error messages may be hidden by `mocha`. When tracking down the cause of an error, running the example code directly, for example `node example/js/test.js`, may be helpful.
+
+It may also be helpful to recompile the module with `PCAN_DEBUG` (and, on macOS, `PCAN_EVENT_DARWIN_DEBUG`) defined to enable debugging messages.
+
+#### Editor Support
+
+A `compile_flags.txt` is included for [clangd](https://clangd.llvm.org/). It uses the Node-API headers from the `node-api-headers` dev dependency and the vendor headers in `deps/`, so run `npm run fetch-deps -- --all` and `npm install` first.
 
 ## Distribution
 
-As part of the installation process, the platform-specific binary portion of the native addon is retrieved from a separate GitHub repository at [@csllc/cs-pcan-usb-binding](https://github.com/csllc/cs-pcan-usb-binding). This allows the `cs-pcan-usb` module to be installed on machines that do not have a full development environment set up to build it from source.
+The module uses only Node-API, so a single binary works with every supported NodeJS version. The published npm package includes prebuilt binaries in `prebuilds/`. If no prebuilt binary matches, `npm install` falls back to building from source, which requires the build environment described above.
 
-This package is configured such that `npm install` will attempt to download the pre-built binary first, and fall back onto building from source if that fails.
+The macOS prebuilt binaries include the complete, unmodified PCBUSB release folder in `prebuilds/darwin-*/PCBUSB/`. If you bundle this module into an application (for example with Electron), keep that whole folder next to the `.node` file, outside of any `.asar` archive: PCBUSB's license only allows redistributing complete copies, including its `LICENSE` file.
 
-### Building and Packaging for Distribution
+To make the prebuilt binary locally (after `npm run fetch-deps`):
 
-After incrementing the package version number in this repository, the following commands can be used to generate a corresponding binary package for release.
-
- - `node-pre-gyp configure`
- - `node-pre-gyp build`
- - `node-pre-gyp package`
- 
-Depending on shell or executable path configuration, it may be necessary to use `npx` to execute the above commands.
-
-Afterwards, create a new release in [@csllc/cs-pcan-usb-binding](https://github.com/csllc/cs-pcan-usb-binding) using the same new version number and attach the `.tar.gz` file found in `build/stage/{version}/`.
+ - `npm run prebuildify`
 
 ## Functionality Limitations
 
@@ -308,3 +311,12 @@ The following have been observed as potential sources of unexpected behavior in 
 The following have not been tested due to hardware availability.
 	
  - All FD functions (`CAN_InitializeFD`, `CAN_ReadFD`, `CAN_WriteFD`)
+
+## Licensing and Dependencies
+
+This project is licensed under the MIT license - see the [LICENSE](LICENSE) file for details.
+
+It uses the following third-party components:
+
+* [PEAK PCAN-Basic API](https://www.peak-system.com/PCAN-Basic.239.0.html) - Copyright PEAK-System Technik GmbH, Germany. On Windows, the module is compiled against PCAN-Basic's header file and import library, and uses `PCANBasic.dll` at runtime. These are subject to PEAK-System's license and are not included in this repository or in the npm package. Install the PEAK-System device driver package to use the module, and see Build Environment Setup to build it.
+* [PCBUSB library](https://github.com/mac-can/PCBUSB-Library) - Copyright UV Software, Berlin. On macOS, the module is compiled against PCBUSB and uses `libPCBUSB` at runtime. PCBUSB is not included in this repository. As its license permits, a complete, unmodified copy of the PCBUSB release, including its license, is included with the macOS prebuilt binaries in the npm package.

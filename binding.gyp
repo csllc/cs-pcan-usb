@@ -1,83 +1,56 @@
 {
-    "variables": {
-        "mac_dylib_orig": "libPCBUSB.0.11.1.dylib",
-        "mac_dylib": "libPCBUSB.dylib",
-        "openssl_fips" : "0"
-    },
-    "targets": [ {
-        "target_name": "<(module_name)",
-        "sources": [ "src/pcan.c",
-                     "src/pcan_helper.c",
-                     "src/napi_helper.c",
-                     "src/common_helper.c" ],
-        "conditions": [
-            [ "OS=='win'", {
-                "sources": [ "src/pcan_event_win32.c" ],
-                "msvs_settings": { },
-                "include_dirs": [ "vendor/pcan_basic-win32-x64/include" ],
-                "link_settings": { "libraries": [ "-lPCANBasic" ] },
-                "conditions": [
-                    [ "target_arch=='ia32'", {
-                        "library_dirs": [ "vendor/pcan_basic-win32-x64/lib/32" ]
-                    } ],
-                    [ "target_arch=='x64'", {
-                        "library_dirs": [ "vendor/pcan_basic-win32-x64/lib/64" ]
-                    } ]
-                ]
-            } ],
-            [ "OS=='mac'", {
-                "sources": [ "src/pcan_event_darwin.c" ],
-                "include_dirs": [ "vendor/pcbusb-darwin-x64/include" ],
-                "library_dirs": [ "<(module_root_dir)/vendor/pcbusb-darwin-x64/lib" ],
-                "link_settings": {
-                    "libraries": [
-
-                        "-lPCBUSB"
-                    ],
-                }
-            } ]
-        ]
-    },
+  "variables": {
+    # Vendor library locations (see tools/pcan-sdk.js). Neither library is
+    # part of this repository; run `npm run fetch-deps` to download them.
+    "pcan_include": "<!(node tools/pcan-sdk.js include)",
+    "pcan_lib": "<!(node tools/pcan-sdk.js lib)"
+  },
+  "targets": [
     {
-        "target_name": "action_after_build",
-        "type": "none",
-        "dependencies": [ "<(module_name)" ],
-        "copies": [ {
-            "files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
-            "conditions": [
-                [ "OS=='win'", {
-                    "conditions": [
-                        [ "target_arch=='ia32'", {
-                            "files": [ "vendor/pcan_basic-win32-x64/bin/32/PCANBasic.dll",
-                                       "vendor/pcan_basic-win32-x64/bin/ReadMe.txt" ]
-                        } ],
-                        [ "target_arch=='x64'", {
-                            "files": [ "vendor/pcan_basic-win32-x64/bin/64/PCANBasic.dll",
-                                       "vendor/pcan_basic-win32-x64/bin/ReadMe.txt" ]
-                        } ]
-                    ]
-
-                } ],
-                [ "OS=='mac'", {
-                    "files": [ "vendor/pcbusb-darwin-x64/COPYRIGHT",
-                               "vendor/pcbusb-darwin-x64/LICENSE",
-                               "vendor/pcbusb-darwin-x64/README",
-                               "vendor/pcbusb-darwin-x64/lib/<(mac_dylib)" ]
-                } ],
-            ],
-            "destination": "<(module_path)"
-        } ],
-        "conditions": [
-            [ "OS=='mac'", {
-                
-                "actions": [ {
-                    "action_name": "install_name_tool",
-                    "inputs": [ "<(PRODUCT_DIR)/<(module_name).node" ],
-                    "outputs": [ "" ],
-                    "action": [ "install_name_tool", "-change", "@rpath/<(mac_dylib_orig)", "@loader_path/<(mac_dylib)", "<(PRODUCT_DIR)/<(module_name).node" ]
-                } ]
-            } ]
+      "target_name": "cs_pcan_usb",
+      "sources": [
+        "src/pcan.c",
+        "src/pcan_helper.c",
+        "src/napi_helper.c",
+        "src/common_helper.c"
+      ],
+      "include_dirs": [
+        "<(pcan_include)"
+      ],
+      "link_settings": {
+        "libraries": [
+          "<(pcan_lib)"
         ]
-    } ]
+      },
+      "conditions": [
+        [
+          "OS=='win'",
+          {
+            # PEAK PCAN-Basic API (64-bit). PCANBasic.dll itself is installed
+            # by PEAK's device driver setup.
+            "sources": [
+              "src/pcan_event_win32.c"
+            ]
+          }
+        ],
+        [
+          "OS=='mac'",
+          {
+            # UV Software PCBUSB library. Look for it first in a PCBUSB folder
+            # next to the addon (see tools/bundle-pcbusb.js), then where
+            # PCBUSB's install.sh puts it.
+            "sources": [
+              "src/pcan_event_darwin.c"
+            ],
+            "xcode_settings": {
+              "OTHER_LDFLAGS": [
+                "-Wl,-rpath,@loader_path/PCBUSB",
+                "-Wl,-rpath,/usr/local/lib"
+              ]
+            }
+          }
+        ]
+      ]
+    }
+  ]
 }
-

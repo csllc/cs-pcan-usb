@@ -42,3 +42,7 @@ binding/
 
 # clangd index
 .cache/
+prebuilds/
+
+# Vendor libraries downloaded by `npm run fetch-deps`
+deps/

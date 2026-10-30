@@ -3,16 +3,24 @@
   "version": "0.3.3",
   "description": "PCAN-USB module for NodeJS",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/",
+    "src/",
+    "tools/pcan-sdk.js",
+    "tools/fetch-deps.js",
+    "tools/bundle-pcbusb.js",
+    "binding.gyp",
+    "prebuilds/"
+  ],
   "license": "MIT",
   "author": "cwalden@controls.com",
   "os": [
-    "win32",
-    "darwin"
+    "darwin",
+    "win32"
   ],
   "dependencies": {
-    "@mapbox/node-pre-gyp": "^1.0.9",
-    "bindings": "~1.2.1",
-    "stream": "0.0.2"
+    "node-gyp-build": "^4.8.0"
   },
   "devDependencies": {
     "@csllc/j1939": "^1.1.1",
@@ -23,22 +31,23 @@
     "eslint-plugin-mocha": "^8.2.0",
     "mocha": "^8.4.0",
     "node-api-headers": "^1.9.0",
-    "node-gyp": "^9.3.0"
+    "node-gyp": "^12.1.0",
+    "prebuildify": "^6.0.0"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "node-gyp-build",
+    "fetch-deps": "node tools/fetch-deps.js",
+    "build": "node-gyp build && node tools/bundle-pcbusb.js build/Release",
+    "rebuild": "node-gyp rebuild && node tools/bundle-pcbusb.js build/Release",
+    "prebuildify": "prebuildify --napi && node tools/bundle-pcbusb.js --prebuilds",
     "test": "mocha test"
-  },
-  "binary": {
-    "module_name": "cs_pcan_usb",
-    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
-    "module_path": "./binding/{configuration}/{node_abi}-{platform}-{arch}/",
-    "host": "https://github.com/csllc/cs-pcan-usb-binding/releases/download/",
-    "remote_path": "{version}"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/csllc/cs-pcan-usb.git"
   },
-  "gypfile": true
+  "gypfile": true,
+  "publishConfig": {
+    "access": "public"
+  }
 }

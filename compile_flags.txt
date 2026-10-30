@@ -1,7 +1,7 @@
 -xc
 -Inode_modules/node-api-headers/include
--Ivendor/pcan_basic-win32-x64/include
--Ivendor/pcbusb-darwin-x64/include
+-Ideps/pcan-basic/Include
+-Ideps/pcbusb/PCBUSB
 -DNODE_GYP_MODULE_NAME=cs_pcan_usb
 -DBUILDING_NODE_EXTENSION
 -DWIN32

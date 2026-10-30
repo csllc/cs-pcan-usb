@@ -1,9 +1,37 @@
 'use strict';
 
-const binary = require('@mapbox/node-pre-gyp');
-const path = require('path');
-const pcan_path = binary.find(path.resolve(path.join(__dirname, './package.json')));
-const pcan = require(pcan_path);
+// Load the native addon: prebuilds/<platform>-<arch>/ if a matching prebuild
+// is present, otherwise build/Release (or build/Debug).
+//
+// The addon links against a vendor library that is installed separately:
+//  - Windows: PCANBasic.dll, installed by PEAK's device driver setup (it is
+//    not distributed with this module)
+//  - macOS: libPCBUSB, bundled with the prebuilt binary, or installed in
+//    /usr/local/lib by PCBUSB's install.sh
+// If it can't be found, the addon can't be loaded. In that case, the module
+// still loads so that callers probing for several kinds of CAN adapter keep
+// working: list() resolves to an empty list, and anything else throws
+// loadError.
+let pcan;
+let loadError = null;
+try {
+  pcan = require('node-gyp-build')(__dirname);
+} catch (err) {
+  if (err.code !== 'ERR_DLOPEN_FAILED' ||
+      (process.platform !== 'win32' && process.platform !== 'darwin')) {
+    throw err;
+  }
+  loadError = new Error((process.platform === 'win32')
+    ? 'cs-pcan-usb: could not load PCANBasic.dll. Install the PEAK-System ' +
+      'device driver package, including the PCAN-Basic API ' +
+      '(https://www.peak-system.com/support/downloads/drivers/driver-packages/).'
+    : 'cs-pcan-usb: could not load libPCBUSB. Install the PCBUSB library ' +
+      '(https://github.com/mac-can/PCBUSB-Library).', { cause: err });
+  loadError.code = 'ERR_PCAN_NOT_INSTALLED';
+  pcan = new Proxy({}, {
+    get() { throw loadError; },
+  });
+}
 
 const { Duplex } = require('stream');
 const tpcan = require('./lib/tpcan.js');
@@ -74,7 +102,10 @@ module.exports = class PcanUsb extends Duplex {
   // Returns a promise that resolves to a list of available CAN ports
   list() {
     return new Promise(function(resolve, reject) {
-        if(process.platform == "win32") {
+        if(loadError) {
+          // PCAN library not installed
+          resolve([]);
+        } else if(process.platform == "win32") {
           // If running on Windows, get channel data through the ChannelInfo method
           try {
             resolve(pcan.ChannelInfo());
