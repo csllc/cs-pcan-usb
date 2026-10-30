@@ -149,17 +149,20 @@ const lookup_t pcanParameters [] = {
 const char pcanParameterUnknown[] = "Parameter unknown";
 
 
-// String lookup table for device types
+// String lookup table for device types. The values are written out because
+// PCAN-Basic 5 no longer defines the legacy device types (PCAN_PEAKCAN,
+// PCAN_ISA, PCAN_DNG, PCAN_PCC, PCAN_VIRTUAL); older PCAN-Basic versions and
+// PCBUSB on macOS still do, with these values.
 const lookup_t pcanDevices [] = {
-    { PCAN_NONE,    "PCAN_NONE" },
-    { PCAN_PEAKCAN, "PCAN_PEAKCAN" },
-    { PCAN_ISA,     "PCAN_ISA" },
-    { PCAN_DNG,     "PCAN_DNG" },
-    { PCAN_PCI,     "PCAN_PCI" },
-    { PCAN_USB,     "PCAN_USB" },
-    { PCAN_PCC,     "PCAN_PCC" },
-    { PCAN_VIRTUAL, "PCAN_VIRTUAL" },
-    { PCAN_LAN,     "PCAN_LAN" },
+    { 0x00, "PCAN_NONE" },
+    { 0x01, "PCAN_PEAKCAN" },
+    { 0x02, "PCAN_ISA" },
+    { 0x03, "PCAN_DNG" },
+    { 0x04, "PCAN_PCI" },
+    { 0x05, "PCAN_USB" },
+    { 0x06, "PCAN_PCC" },
+    { 0x07, "PCAN_VIRTUAL" },
+    { 0x08, "PCAN_LAN" },
     { 0, 0 },
 };
 
