@@ -1,0 +1,73 @@
+# One-off check that the PEAK PCAN-Basic API (Windows) and the UV Software
+# PCBUSB library (macOS) can be downloaded and used on GitHub's runners, so
+# the release workflow can build without any vendor files in this repo.
+# Delete this file once the release workflow is in place.
+
+name: PCAN SDK test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Download PCAN-Basic API
+        run: |
+          $url = 'https://www.peak-system.com/fileadmin/media/files/PCAN-Basic.zip'
+          $r = Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\PCAN-Basic.zip" -PassThru
+          "HTTP status:   $($r.StatusCode)"
+          "Last-Modified: $($r.Headers['Last-Modified'])"
+          "ETag:          $($r.Headers['ETag'])"
+          $f = Get-Item "$env:RUNNER_TEMP\PCAN-Basic.zip"
+          "Size:          $($f.Length)"
+          "SHA256:        $((Get-FileHash $f -Algorithm SHA256).Hash)"
+
+      - name: Unpack and list contents
+        run: |
+          Expand-Archive "$env:RUNNER_TEMP\PCAN-Basic.zip" -DestinationPath "$env:RUNNER_TEMP\pcan-basic"
+          Get-ChildItem -Recurse "$env:RUNNER_TEMP\pcan-basic" |
+            Where-Object { -not $_.PSIsContainer } |
+            Select-Object @{n='Path';e={$_.FullName.Substring("$env:RUNNER_TEMP\pcan-basic".Length)}}, Length |
+            Format-Table -AutoSize | Out-String -Width 300
+
+      - name: Show version and rights-of-use text
+        run: |
+          $readme = Get-ChildItem -Recurse "$env:RUNNER_TEMP\pcan-basic" -Filter 'ReadMe.txt' | Select-Object -First 1
+          Get-Content $readme.FullName -TotalCount 12
+          ''
+          (Get-Content $readme.FullName -Raw) -split "`r?`n`r?`n" |
+            Where-Object { $_ -match 'Rights to use|redistribut|distribut' }
+
+      - name: Check for files the build needs
+        run: |
+          $root = "$env:RUNNER_TEMP\pcan-basic"
+          foreach ($pattern in 'PCANBasic.h', 'PCANBasic.lib', 'PCANBasic.dll') {
+            "--- $pattern"
+            Get-ChildItem -Recurse $root -Filter $pattern | ForEach-Object { "$($_.FullName.Substring($root.Length))  ($($_.Length) bytes)" }
+          }
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Download PCBUSB 0.11.1 and verify checksum
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/pcbusb.tar.gz" \
+            https://github.com/mac-can/PCBUSB-Library/releases/download/v0.11.1/macOS_Library_for_PCANUSB_v0.11.1.tar.gz
+          echo "3160d1f5200151e3c6541c8c7994f6a8859b59d2b971912ca8c85c131af90a22  $RUNNER_TEMP/pcbusb.tar.gz" | shasum -a 256 -c
+
+      - name: Install with the vendor's install script
+        run: |
+          mkdir -p "$RUNNER_TEMP/pcbusb"
+          tar -xzf "$RUNNER_TEMP/pcbusb.tar.gz" -C "$RUNNER_TEMP/pcbusb"
+          sudo sh "$RUNNER_TEMP/pcbusb/PCBUSB/install.sh"
+
+      - name: Check installed files
+        run: |
+          uname -m
+          ls -la /usr/local/lib/libPCBUSB* /usr/local/include/PCBUSB.h
+          lipo -info /usr/local/lib/libPCBUSB.dylib
+          otool -D /usr/local/lib/libPCBUSB.dylib

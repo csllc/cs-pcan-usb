@@ -6,7 +6,8 @@
   "license": "MIT",
   "author": "cwalden@controls.com",
   "os": [
-    "win32"
+    "win32",
+    "darwin"
   ],
   "dependencies": {
     "@mapbox/node-pre-gyp": "^1.0.9",
