@@ -1,0 +1,11 @@
+-xc
+-Inode_modules/node-api-headers/include
+-Iext/pcan_basic-win32-x64/include
+-Iext/pcbusb-darwin-x64/include
+-DNODE_GYP_MODULE_NAME=cs_pcan_usb
+-DBUILDING_NODE_EXTENSION
+-DWIN32
+-D_WINDOWS
+-Wall
+-Wextra
+-Wno-unused-parameter

@@ -21,6 +21,7 @@
     "eslint": "^8.19.0",
     "eslint-plugin-mocha": "^8.2.0",
     "mocha": "^8.4.0",
+    "node-api-headers": "^1.9.0",
     "node-gyp": "^9.3.0"
   },
   "scripts": {

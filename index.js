@@ -17,6 +17,11 @@ const DEFAULT_OPTIONS = {
 
 const PCAN_RECEIVE_STATUS = 0x0F;
 const PCAN_LISTEN_ONLY = 0x08;
+const PCAN_CHANNEL_CONDITION = 0x0D;
+const PCAN_CHANNEL_AVAILABLE = 0x01;
+const PCAN_CHANNEL_OCCUPIED = 0x02;
+const PCAN_USBBUS1 = 0x51;
+const PCAN_USB = 0x05;
 
 module.exports = class PcanUsb extends Duplex {
 
@@ -83,26 +88,33 @@ module.exports = class PcanUsb extends Duplex {
             }
           }
         } else if(process.platform == "darwin") {
-          // const usb  = require('usb');
-          // // If running on macOS, we fake it by resolving with an array of objects
-          // // we create, based on the number of detected PCAN-USB devices. We assume
-          // // that the first handle is always 0x51.
-          // let devices = usb.getDeviceList().filter((dev) => {
-          //   return ((dev.deviceDescriptor.idVendor == 0x0C72) &&
-          //           (dev.deviceDescriptor.idProduct == 0x000C));
-          // });
-          let devices = [];
+          // The macOS PCBUSB library does not support PCAN_ATTACHED_CHANNELS,
+          // so ChannelInfo() can't be used. Instead, ask each PCAN-USB channel
+          // handle whether hardware is present (PCAN_CHANNEL_CONDITION).
+          // PCBUSB supports up to 8 devices, on handles PCAN_USBBUS1..8.
           let channels = [];
 
-          for(let index in devices) {
-            channels.push({
-              channel_handle: (0x51 + Number(index)),
-              device_type: 5,
-              controller_number: 0,
-              device_features: 0,
-              device_id: 0,
-              channel_condition: 0
-            })
+          for(let handle = PCAN_USBBUS1; handle < PCAN_USBBUS1 + 8; handle++) {
+            let buf = Buffer.alloc(4);
+            try {
+              pcan.GetValue(handle, PCAN_CHANNEL_CONDITION, buf);
+            } catch (err) {
+              continue;
+            }
+            let condition = buf.readUInt32LE(0);
+
+            // Hardware is present if available, or already in use by another app
+            if(condition & (PCAN_CHANNEL_AVAILABLE | PCAN_CHANNEL_OCCUPIED)) {
+              channels.push({
+                channel_handle: handle,
+                device_type: PCAN_USB,
+                controller_number: 0,
+                device_features: 0,
+                device_name: 'PCAN-USB',
+                device_id: 0,
+                channel_condition: condition
+              });
+            }
           }
 
           resolve(channels);
