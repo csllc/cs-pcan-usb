@@ -93,10 +93,20 @@ async function fetchPackage(platform) {
   fs.rmSync(unpackDir, { recursive: true, force: true });
   fs.mkdirSync(unpackDir, { recursive: true });
 
-  // bsdtar (built into Windows 10+ and macOS) unpacks both .zip and .tar.gz
-  const tar = spawnSync('tar', [ '-xf', archivePath, '-C', unpackDir ], { stdio: 'inherit' });
-  if (tar.status !== 0) {
-    fail(`could not unpack ${archivePath}`);
+  // Unpack with bsdtar, which is built into Windows 10+ and macOS and handles
+  // both .zip and .tar.gz. Use the system copy explicitly: a GNU tar found
+  // first on the PATH (e.g. from Git Bash or Homebrew) can't unpack .zip
+  // files, and treats "C:" in a path as a remote host name. Relative paths
+  // (from deps/) avoid the drive-letter problem as well.
+  const tarExe = (process.platform === 'win32')
+    ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe')
+    : '/usr/bin/tar';
+  const tar = spawnSync(tarExe,
+    [ '-xf', pkg.archive, '-C', pkg.unpackInto ],
+    { cwd: DEPS, stdio: 'inherit' });
+  if (tar.error || tar.status !== 0) {
+    fail(`could not unpack ${archivePath} with ${tarExe}` +
+      (tar.error ? `: ${tar.error.message}` : ''));
   }
   fs.rmSync(archivePath);
 
