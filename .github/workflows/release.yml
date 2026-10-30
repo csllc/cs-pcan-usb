@@ -232,7 +232,10 @@ jobs:
           ls -lR prebuilds
 
       # Each platform needs its binary, each macOS binary needs the complete
-      # PCBUSB folder next to it, and nothing from PEAK may be published
+      # PCBUSB folder next to it, and nothing from PEAK's PCAN-Basic package
+      # may be published. The bundled PCBUSB release is exempt from the last
+      # check: it includes its own Python example, Examples/Python/PCANBasic.py,
+      # which is shipped unchanged as part of the complete release.
       - name: Check package contents
         run: |
           for p in win32-x64 darwin-arm64 darwin-x64; do
@@ -244,7 +247,7 @@ jobs:
             done
           done
           npm pack --dry-run
-          if npm pack --dry-run --json | grep -i -E '"path": *"[^"]*pcanbasic'; then
+          if npm pack --dry-run --json | grep -i -E '"path": *"[^"]*pcanbasic' | grep -v -E '"path": *"prebuilds/darwin-[^/]+/PCBUSB/'; then
             echo "PEAK PCAN-Basic files must not be published"
             exit 1
           fi
